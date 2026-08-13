@@ -21,7 +21,7 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'YOUR_EMAIL@gmail.com'     # ใส่อีเมลของคุณ
 app.config['MAIL_PASSWORD'] = 'YOUR_APP_PASSWORD'        # ใส่ App Password ของอีเมล
-
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 GOOGLE_CLIENT_ID = '489861572843-kmpo2sdkd3mg5t4co3f7eal0qdr43mla.apps.googleusercontent.com'               # 489861572843-kmpo2sdkd3mg5t4co3f7eal0qdr43mla.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET = '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'       # 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
 
