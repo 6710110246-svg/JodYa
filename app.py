@@ -22,8 +22,8 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'YOUR_EMAIL@gmail.com'     # ใส่อีเมลของคุณ
 app.config['MAIL_PASSWORD'] = 'YOUR_APP_PASSWORD'        # ใส่ App Password ของอีเมล
 
-GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'               # ใส่ Client ID
-GOOGLE_CLIENT_SECRET = 'YOUR_GOOGLE_CLIENT_SECRET'       # ใส่ Client Secret
+GOOGLE_CLIENT_ID = '489861572843-kmpo2sdkd3mg5t4co3f7eal0qdr43mla.apps.googleusercontent.com'               # 489861572843-kmpo2sdkd3mg5t4co3f7eal0qdr43mla.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET = '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'       # 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
 
 db = SQLAlchemy(app)
 mail = Mail(app)
