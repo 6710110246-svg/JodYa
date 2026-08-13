@@ -1,0 +1,8 @@
+Flask
+werkzeug
+google-cloud-pubsub
+flask-login
+flask-sqlalchemy
+Authlib
+requests
+Flask-Mail

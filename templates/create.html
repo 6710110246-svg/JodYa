@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตั้งกระทู้ใหม่</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #dae0e6; padding: 20px; display: flex; justify-content: center; }
+        .form-container { background: white; padding: 30px; width: 100%; max-width: 600px; border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        label { font-weight: bold; display: block; margin-bottom: 5px; color: #1c1c1c; }
+        input[type="text"], textarea { width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        input[type="file"] { margin-bottom: 20px; }
+        
+        button { width: 100%; padding: 12px; background: #0079d3; color: white; border: none; font-weight: bold; border-radius: 20px; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        button:hover { background: #005fa3; }
+        
+        h2 { text-align: left; color: #1c1c1c; border-bottom: 1px solid #edeff1; padding-bottom: 10px; margin-top: 0; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #666; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>📝 สร้างโพสต์ใหม่</h2>
+        
+        <form action="/create" method="POST" enctype="multipart/form-data">
+            
+            <label>หัวข้อเรื่อง:</label>
+            <input type="text" name="title" required placeholder="หัวข้อน่าสนใจ...">
+            
+            <label>เนื้อหา:</label>
+            <textarea name="content" rows="6" required placeholder="เล่าเรื่องราวของคุณ..."></textarea>
+            
+            <label>📷 อัปโหลดรูปภาพ หรือ วิดีโอ (กด Ctrl ค้างเพื่อเลือกหลายรูป):</label>
+            <input type="file" name="file" accept="image/*,video/*" multiple>
+            
+            <button type="submit">โพสต์เลย (Post)</button>
+        </form>
+        
+        <a href="/" class="back-link">ยกเลิก และกลับไปหน้าหลัก</a>
+    </div>
+</body>
+</html>

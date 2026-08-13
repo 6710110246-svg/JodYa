@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.username }} - Profile</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #dae0e6;
+            margin: 0;
+            padding-top: 48px;
+            color: #1c1c1c;
+        }
+
+        .navbar-custom {
+            background-color: white;
+            height: 48px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 22px;
+            color: #0079d3;
+            text-decoration: none;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-search {
+            flex-grow: 1;
+            max-width: 600px;
+            margin: 0 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: #f6f7f8;
+            border: 1px solid #edeff1;
+            border-radius: 20px;
+            padding: 6px 15px;
+            outline: none;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            color: #1c1c1c;
+            font-size: 20px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .icon-btn span {
+            font-size: 14px;
+            font-weight: bold;
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .icon-btn span {
+                display: block;
+            }
+        }
+
+        .user-nav-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #1c1c1c;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 5px;
+        }
+
+        .user-nav-img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .btn-logout {
+            color: #0079d3;
+            border: 1px solid #0079d3;
+            background: white;
+            border-radius: 20px;
+            font-weight: bold;
+            padding: 4px 15px;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .btn-logout:hover {
+            background: #f5fafd;
+        }
+
+        .btn-create {
+            background-color: #0079d3;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-weight: bold;
+            padding: 4px 15px;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-create:hover {
+            background-color: #0060a8;
+            color: white;
+        }
+
+        .main-layout {
+            display: flex;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 24px;
+        }
+
+        .sidebar {
+            width: 220px;
+            display: none;
+        }
+
+        @media (min-width: 900px) {
+            .sidebar {
+                display: block;
+            }
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            color: #1c1c1c;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .menu-item:hover {
+            background-color: #f6f7f8;
+        }
+
+        .content-area {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .profile-header {
+            display: flex;
+            margin-bottom: 30px;
+            align-items: flex-start;
+        }
+
+        .profile-img-container {
+            margin-right: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #dbdbdb;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .username-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .username-row h2 {
+            font-size: 24px;
+            font-weight: 400;
+            margin: 0;
+        }
+
+        .stats-row {
+            display: flex;
+            padding-left: 0;
+            list-style: none;
+            gap: 30px;
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+
+        .stats-row li {
+            cursor: pointer;
+        }
+
+        .profile-tabs {
+            border-top: 1px solid #dbdbdb;
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-bottom: 20px;
+        }
+
+        .tab-item {
+            padding-top: 15px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #8e8e8e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-top: 1px solid transparent;
+            margin-top: -1px;
+        }
+
+        .tab-item.active {
+            color: #1c1c1c;
+            border-top: 1px solid #1c1c1c;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .gallery-item {
+            position: relative;
+            padding-bottom: 100%;
+            background: #000;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .gallery-item img,
+        .gallery-item video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.2s;
+        }
+
+        .gallery-item:hover img {
+            opacity: 0.8;
+        }
+
+        .user-list {
+            display: none;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #efefef;
+        }
+
+        .user-info-mini {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar-mini {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .upload-btn {
+            font-size: 13px;
+            color: #0079d3;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar-custom">
+        <a href="/" class="logo">
+            <i class="fas fa-comment-dots" style="font-size: 28px;"></i>
+            <span>Langgun</span>
+        </a>
+
+        <div class="nav-search">
+            <form action="/" method="GET" style="margin: 0;">
+                <input type="text" name="q" class="search-input" placeholder="ค้นหา..."
+                    value="{{ request.args.get('q', '') }}">
+            </form>
+        </div>
+
+        <div class="nav-right">
+            <a href="/notifications" class="icon-btn" title="Notifications">
+                <i class="fas fa-bell"></i>
+            </a>
+
+            <a href="/chats" class="icon-btn" title="Chat">
+                <i class="fas fa-comment-dots"></i>
+                <span>แชท</span>
+            </a>
+
+            <a href="{{ url_for('profile', username=current_user.username) }}" class="user-nav-profile">
+                <img src="{{ get_profile_image(current_user.username) }}" class="user-nav-img">
+                <span>{{ current_user.username }}</span>
+            </a>
+
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+
+            <a href="{{ url_for('create_post') }}" class="btn-create">
+                <i class="fas fa-plus"></i> Create
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-layout">
+
+        <aside class="sidebar">
+            <a href="{{ url_for('index') }}" class="menu-item"
+                style="background-color: #f6f7f8; font-weight: bold; border-left: 3px solid #0079d3;">
+                <i class="fas fa-arrow-left"></i> Back to home
+            </a>
+        </aside>
+
+        <main class="content-area">
+
+            <div class="profile-card">
+
+                <div class="profile-header">
+                    <div class="profile-img-container">
+                        <img src="{{ get_profile_image(user.username) }}" class="profile-img" alt="Profile Picture">
+
+                        {% if current_user.is_authenticated and current_user.username == user.username %}
+                        <form action="{{ url_for('profile', username=user.username) }}" method="POST"
+                            enctype="multipart/form-data">
+                            <label for="upload-img" class="upload-btn">
+                                เปลี่ยนรูปโปรไฟล์
+                            </label>
+                            <input type="file" name="profile_pic" id="upload-img" accept="image/*"
+                                style="display: none;" onchange="this.form.submit()">
+                        </form>
+                        {% endif %}
+                    </div>
+
+                    <div class="profile-info">
+                        <div class="username-row">
+                            <h2>{{ user.username }}</h2>
+
+                            {% if current_user.username == user.username %}
+                            <button type="button" class="btn btn-outline-dark btn-sm ms-3" style="border-radius: 20px;"
+                                data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                Edit Information
+                            </button>
+                            {% else %}
+                            {% if current_user.is_following(user) %}
+                            <a href="{{ url_for('unfollow', username=user.username) }}"
+                                class="btn btn-outline-secondary btn-sm ms-3" style="border-radius: 20px;">Following</a>
+                            {% else %}
+                            <a href="{{ url_for('follow', username=user.username) }}"
+                                class="btn btn-primary btn-sm ms-3" style="border-radius: 20px;">Follow</a>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+
+                        <ul class="stats-row">
+                            <li onclick="showTab('posts', document.querySelector('.tab-item:nth-child(1)'))">
+                                <strong>{{ post_count }}</strong> posts
+                            </li>
+                            <li onclick="showTab('followers', document.querySelector('.tab-item:nth-child(2)'))">
+                                <strong>{{ follower_count }}</strong> followers
+                            </li>
+                            <li onclick="showTab('following', document.querySelector('.tab-item:nth-child(3)'))">
+                                <strong>{{ following_count }}</strong> following
+                            </li>
+                        </ul>
+
+                        <div class="fullname" style="font-weight: bold;">{{ user.username }}</div>
+                        <div class="bio" style="font-size: 14px; color: #666;">Welcome to my profile!</div>
+                    </div>
+                </div>
+
+                <div class="profile-tabs">
+                    <div class="tab-item active" onclick="showTab('posts', this)">
+                        <i class="fas fa-th"></i> POSTS
+                    </div>
+                    <div class="tab-item" onclick="showTab('followers', this)">
+                        <i class="fas fa-users"></i> FOLLOWERS
+                    </div>
+                    <div class="tab-item" onclick="showTab('following', this)">
+                        <i class="fas fa-user-friends"></i> FOLLOWING
+                    </div>
+                </div>
+
+                <div id="posts-content" class="gallery-grid">
+                    {% for post in posts %}
+                    <div class="gallery-item">
+                        {% if post.filename and post.filename.endswith(('.mp4', '.mov', '.webm')) %}
+                        <video src="{{ url_for('static', filename='uploads/' + post.filename) }}"></video>
+                        <i class="fas fa-video position-absolute top-0 end-0 m-2 text-white"></i>
+                        {% elif post.filename %}
+                        <img src="{{ url_for('static', filename='uploads/' + post.filename) }}" alt="Post">
+                        {% else %}
+                        <div
+                            class="d-flex justify-content-center align-items-center h-100 bg-secondary text-white p-2 text-center">
+                            <small>{{ post.content[:30] }}...</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-center w-100 mt-5 text-muted" style="grid-column: span 3;">No posts yet.</p>
+                    {% endfor %}
+                </div>
+
+                <div id="followers-content" class="user-list">
+                    {% for follower in user.followers.all() %}
+                    <div class="user-item">
+                        <div class="user-info-mini">
+                            <img src="{{ get_profile_image(follower.username) }}" class="user-avatar-mini" alt="Avatar">
+                            <a href="{{ url_for('profile', username=follower.username) }}" class="fw-bold text-dark">{{
+                                follower.username }}</a>
+                        </div>
+                        {% if current_user.is_authenticated and current_user.id != follower.id %}
+                        {% if current_user.is_following(follower) %}
+                        <a href="{{ url_for('unfollow', username=follower.username) }}"
+                            class="btn btn-outline-secondary btn-sm" style="border-radius: 20px;">Following</a>
+                        {% else %}
+                        <a href="{{ url_for('follow', username=follower.username) }}" class="btn btn-primary btn-sm"
+                            style="border-radius: 20px;">Follow</a>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-center mt-5 text-muted">No followers yet.</p>
+                    {% endfor %}
+                </div>
+
+                <div id="following-content" class="user-list">
+                    {% for f_user in following_users %}
+                    <div class="user-item">
+                        <div class="user-info-mini">
+                            <img src="{{ get_profile_image(f_user.username) }}" class="user-avatar-mini" alt="Avatar">
+                            <a href="{{ url_for('profile', username=f_user.username) }}" class="fw-bold text-dark">{{
+                                f_user.username }}</a>
+                        </div>
+                        <button class="btn btn-outline-secondary btn-sm" style="border-radius: 20px;"
+                            disabled>Following</button>
+                    </div>
+                    {% else %}
+                    <p class="text-center mt-5 text-muted">Not following anyone.</p>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">แก้ไขชื่อผู้ใช้</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('profile', username=user.username) }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">ชื่อผู้ใช้ใหม่ (Username)</label>
+                            <input type="text" name="new_username" class="form-control" value="{{ user.username }}"
+                                required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">บันทึกชื่อใหม่</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showTab(tabName, element) {
+            document.getElementById('posts-content').style.display = 'none';
+            document.getElementById('followers-content').style.display = 'none';
+            document.getElementById('following-content').style.display = 'none';
+            document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+
+            if (tabName === 'posts') {
+                document.getElementById('posts-content').style.display = 'grid';
+            } else if (tabName === 'followers') {
+                document.getElementById('followers-content').style.display = 'block';
+            } else if (tabName === 'following') {
+                document.getElementById('following-content').style.display = 'block';
+            }
+
+            if (element) element.classList.add('active');
+        }
+    </script>
+</body>
+
+</html>

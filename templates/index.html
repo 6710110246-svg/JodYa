@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Board</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #dae0e6; margin: 0; padding-top: 48px; color: #1c1c1c; }
+        .navbar { background-color: white; height: 48px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; left: 0; right: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); z-index: 1000; }
+        .logo { font-size: 20px; color: #0095f6; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .nav-search { flex-grow: 1; max-width: 600px; margin: 0 20px; }
+        .search-input { width: 100%; background: #f6f7f8; border: 1px solid #edeff1; border-radius: 20px; padding: 8px 15px; outline: none; }
+        .nav-right { display: flex; align-items: center; gap: 15px; }
+        .nav-right a { text-decoration: none; font-weight: bold; font-size: 14px; }
+        .btn-create { background: #1c1c1c; color: white; padding: 6px 15px; border-radius: 20px; }
+        .btn-login { background: white; color: #0079d3; border: 1px solid #0079d3; padding: 5px 15px; border-radius: 20px; }
+        .btn-notif { position: relative; color: #1c1c1c; font-size: 18px; margin-right: 5px; }
+        .badge { position: absolute; top: -5px; right: -5px; background: rgb(0, 60, 255); color: white; font-size: 10px; padding: 2px 5px; border-radius: 50%; font-weight: bold; }
+        .main-layout { display: flex; max-width: 1000px; margin: 0 auto; padding: 20px; gap: 24px; }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 220px; display: none; position: sticky; top: 68px; height: fit-content; }
+        @media (min-width: 900px) { .sidebar { display: block; } }
+        
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 10px; color: #1c1c1c; text-decoration: none; border-radius: 5px; font-size: 14px; margin-bottom: 5px; transition: background 0.2s; }
+        .menu-item:hover { background-color: #f6f7f8; }
+        /* Active State */
+        .menu-item.active { background-color: #f6f7f8; font-weight: bold; border-left: 3px solid #0044ff; }
+        
+        .menu-divider { height: 1px; background-color: #edeff1; margin: 10px 0; }
+        
+        .content-area { flex-grow: 1; min-width: 0; }
+        /* CSS Post Card คงเดิม */
+        .post-card { background: white; border: 1px solid #ccc; margin-bottom: 10px; border-radius: 4px; overflow: hidden; }
+        .post-main { padding: 10px 15px; width: 100%; box-sizing: border-box; }
+        .post-header { font-size: 12px; color: #787c7e; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+        .follow-btn { margin-left: 5px; border: none; background: #0095f6; color: white; border-radius: 4px; padding: 4px 12px; font-size: 12px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .follow-btn:hover { background: #0084db; }
+        .following-btn { margin-left: 5px; border: 1px solid #dbdbdb; background: transparent; color: #000; border-radius: 4px; padding: 4px 12px; font-size: 12px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .following-btn:hover { border: 1px solid rgb(0, 153, 255); color: rgb(0, 81, 255); content: "Unfollow"; }
+        .user-icon { width: 20px; height: 20px; border-radius: 50%; background: #0079d3; }
+        h3 { margin: 0 0 8px 0; font-size: 18px; color: #222; }
+        p { margin: 0; font-size: 14px; line-height: 21px; color: #1c1c1c; margin-bottom: 10px; }
+        .post-footer { margin-top: 10px; display: flex; gap: 10px; font-size: 12px; color: #878a8c; font-weight: bold; }
+        .footer-btn { padding: 5px 8px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .carousel-container { position: relative; background: #000; width: 100%; height: 400px; display: flex; align-items: center; justify-content: center; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .carousel-slide { display: none; width: 100%; height: 100%; text-align: center; }
+        .carousel-slide.active { display: flex; justify-content: center; align-items: center; }
+        .carousel-slide img, .carousel-slide video { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .prev-btn, .next-btn { position: absolute; top: 50%; transform: translateY(-50%); background-color: rgba(255, 255, 255, 0.8); color: #1c1c1c; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; opacity: 0.6; }
+        .prev-btn { left: 10px; }
+        .next-btn { right: 10px; }
+        .image-counter { position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; z-index: 5; }
+        .flash-msg { background: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #c3e6cb; text-align: center; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <i class="fab fa-reddit"></i> <span>Langgun</span>
+        </a>
+        <div class="nav-search">
+            <form action="/" method="GET" style="margin: 0;">
+                <input type="text" name="q" class="search-input" placeholder="ค้นหา..." value="{{ request.args.get('q', '') }}">
+            </form>
+        </div>
+        <div class="nav-right" style="display: flex; align-items: center; gap: 15px;"> 
+            {% if current_user.is_authenticated %}
+                <a href="/notifications" class="btn-notif" style="text-decoration: none; position: relative;">
+                    <i class="fas fa-bell" style="font-size: 18px; color: #1c1c1c;"></i>
+                    {% set notif_count = current_user.notifications.filter_by(is_read=False).count() %}
+                    <span id="notif-badge" class="badge" style="display: {{ 'inline-block' if notif_count > 0 else 'none' }}; position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; padding: 2px 5px; font-size: 10px;">{{ notif_count }}</span>
+                </a>
+                <a href="{{ url_for('chat_list') }}" style="color:#1c1c1c; font-size:14px; text-decoration:none; display:flex; align-items:center; gap:5px;">
+                    <i class="fas fa-comment-dots"></i> <span>แชท</span>
+                </a>
+                <a href="{{ url_for('profile', username=current_user.username) }}" style="display:inline-flex; align-items:center; gap:8px; text-decoration:none; color:#1c1c1c; font-weight:bold;">
+                    <img src="{{ get_profile_image(current_user.username) }}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; border:1px solid #ddd;">
+                    <span>{{ current_user.username }}</span>
+                </a>
+                <a href="/logout" style="color:#0095f6; font-size:12px; border:1px solid #0095f6; padding:4px 12px; border-radius:20px; text-decoration:none;">Logout</a>
+                <a href="/create" class="btn-create" style="background:#0095f6; color:white; padding:6px 15px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:14px;"><i class="fas fa-plus"></i> Create</a>
+            {% else %}
+                <a href="/login" class="btn-login" style="text-decoration:none; margin-right:10px; font-weight:bold; color:#0095f6;">Log In</a>
+                <a href="/register" class="btn-create" style="text-decoration:none; background:#0095f6; color:white; padding:6px 15px; border-radius:4px; font-weight:bold;">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="main-layout">
+        <aside class="sidebar">
+            <a href="/" class="menu-item {{ 'active' if not feed_type or feed_type != 'following' else '' }}">
+                <i class="fas fa-home"></i> Home
+            </a>
+            
+            {% if current_user.is_authenticated %}
+                <a href="/feed/following" class="menu-item {{ 'active' if feed_type == 'following' else '' }}">
+                    <i class="fas fa-user-friends"></i> Following
+                </a>
+            {% endif %}
+
+            <div class="menu-divider"></div>
+            
+            <a href="{{ url_for('search_users') }}" class="menu-item">
+                <i class="fas fa-search"></i> ค้นหาเพื่อน
+            </a>
+            
+            {% if current_user.is_authenticated %}
+                <div class="menu-divider"></div>
+                <a href="{{ url_for('profile', username=current_user.username) }}" class="menu-item">
+                    <i class="fas fa-user-circle"></i> โปรไฟล์
+                </a>
+                <a href="{{ url_for('chat_list') }}" class="menu-item">
+                    <i class="fas fa-comment-dots"></i> แชท
+                </a>
+                <a href="/create" class="menu-item">
+                    <i class="fas fa-plus-circle"></i> สร้างโพสต์
+                </a>
+            {% endif %}
+        </aside>
+
+        <main class="content-area">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="flash-msg">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div id="feed-container">
+                {% if feed_type == 'following' and not posts %}
+                    <div style="text-align:center; padding: 40px; background:white; border-radius:4px; border:1px solid #ccc;">
+                        <i class="fas fa-user-friends" style="font-size:48px; color:#ccc; margin-bottom:15px;"></i>
+                        <h3>ยังไม่มีโพสต์จากเพื่อน</h3>
+                        <p style="color:#666;">คุณยังไม่ได้ติดตามใคร หรือเพื่อนของคุณยังไม่ได้โพสต์อะไรเลย</p>
+                        <a href="{{ url_for('search_users') }}" style="color:#0079d3; font-weight:bold; text-decoration:none;">ไปค้นหาเพื่อนใหม่ๆ กันเถอะ</a>
+                    </div>
+                {% else %}
+                    {% include 'feed.html' %}
+                {% endif %}
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Update Feed Script
+        let lastHtml = "";
+        
+        // เช็ค URL ปัจจุบันว่าเป็นหน้า Following หรือ Home
+        const isFollowingFeed = window.location.pathname.includes('/feed/following');
+        const feedUrl = isFollowingFeed ? '/feed/following' : '/feed';
+
+        setInterval(function() {
+            const videos = document.querySelectorAll('video');
+            let isPlaying = false;
+            videos.forEach(v => {
+                if (!v.paused && !v.ended && v.readyState > 2) { isPlaying = true; }
+            });
+
+            if (isPlaying) { return; }
+
+            const activeElement = document.activeElement;
+            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) { return; }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('q') || '';
+            const timestamp = new Date().getTime(); 
+
+            // Fetch ตาม URL ที่ถูกต้อง (Home หรือ Following)
+            fetch(`${feedUrl}?q=${query}&t=${timestamp}`)
+                .then(response => response.text())
+                .then(html => {
+                    const container = document.getElementById('feed-container');
+                    // ถ้า HTML ไม่เหมือนเดิม และไม่ใช่หน้าว่างเปล่า (Empty State) ถึงจะอัปเดต
+                    if (html.trim() !== lastHtml.trim() && !html.includes('ยังไม่มีโพสต์จากเพื่อน')) {
+                        // เช็คเพิ่มอีกนิดว่า container มีอยู่จริง (ป้องกัน error)
+                        if (container) {
+                            // ถ้าเป็นหน้า Following และไม่มีโพสต์ ไม่ต้องเอา feed.html มาทับ Empty State
+                            // แต่ถ้ามีโพสต์ (html ยาวๆ) ค่อยทับ
+                            if (html.length > 500) { 
+                                container.innerHTML = html;
+                                lastHtml = html;
+                            }
+                        }
+                    }
+                });
+
+            fetch(`/api/notif_count?t=${timestamp}`)
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notif-badge');
+                    if(badge) {
+                        if (data.count > 0) {
+                            badge.style.display = 'inline-block';
+                            badge.innerText = data.count;
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                });
+
+        }, 3000);
+
+        function moveSlide(postId, direction) {
+            const container = document.getElementById('carousel-' + postId);
+            if (!container) return; 
+            const slides = container.getElementsByClassName('carousel-slide');
+            const counter = container.querySelector('.current-index');
+            let activeIndex = 0;
+            for (let i = 0; i < slides.length; i++) {
+                if (slides[i].classList.contains('active')) {
+                    activeIndex = i; slides[i].classList.remove('active'); break;
+                }
+            }
+            let newIndex = activeIndex + direction;
+            if (newIndex >= slides.length) newIndex = 0;
+            if (newIndex < 0) newIndex = slides.length - 1;
+            slides[newIndex].classList.add('active');
+            if(counter) counter.innerText = newIndex + 1;
+        }
+    </script>
+</body>
+</html>

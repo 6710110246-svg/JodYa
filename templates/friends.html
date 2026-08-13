@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Friends</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #dae0e6; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; width: 100%; max-width: 600px; padding: 20px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        .friend-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f0f0f0; }
+        .friend-info { display: flex; align-items: center; gap: 10px; }
+        .user-icon { width: 30px; height: 30px; background: #0079d3; border-radius: 50%; }
+        .username { font-weight: bold; font-size: 16px; }
+        .unfollow-btn { background: #eee; color: #333; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer; text-decoration: none; font-size: 12px; }
+        .unfollow-btn:hover { background: #ddd; }
+        .back-link { display: block; margin-top: 20px; text-align: center; color: #0079d3; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>👥 คนที่คุณเป็นเพื่อนอยู่ ({{ following_list|length }})</h2>
+        
+        {% if following_list %}
+            {% for friend in following_list %}
+            <div class="friend-item">
+                <div class="friend-info">
+                    <div class="user-icon"></div>
+                    <span class="username">{{ friend.username }}</span>
+                </div>
+                <a href="/unfollow/{{ friend.username }}" class="unfollow-btn">Unfriend</a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="text-align:center; color:#888;">คุณยังไม่ได้ติดตามใครเลย ลองไปหน้าแรกแล้วกดแอดเพื่อนดูสิ!</p>
+        {% endif %}
+
+        <a href="/" class="back-link">← กลับหน้าหลัก</a>
+    </div>
+</body>
+</html>

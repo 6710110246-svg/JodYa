@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สมัครสมาชิก</title>
+    <style>
+        body { font-family: sans-serif; background: #dae0e6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background: #ff4500; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #d93d00; }
+        .error { color: red; font-size: 14px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>📝 สมัครสมาชิกใหม่</h2>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="error">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <input type="text" name="username" placeholder="ตั้งชื่อผู้ใช้" required>
+            <input type="password" name="password" placeholder="ตั้งรหัสผ่าน" required>
+            <button type="submit">Register</button>
+        </form>
+        <p style="font-size: 12px; margin-top: 20px;">
+            มีบัญชีอยู่แล้ว? <a href="/login">เข้าสู่ระบบ</a>
+        </p>
+        <a href="/" style="font-size: 12px; text-decoration: none; color: #666;">← กลับหน้าหลัก</a>
+    </div>
+</body>
+</html>
