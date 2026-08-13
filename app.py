@@ -1,4 +1,5 @@
 import os
+from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -8,6 +9,8 @@ from flask_mail import Mail, Message as MailMessage
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
 
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # ตั้งค่าให้ OAuth ยอมรับ HTTP (สำหรับ dev/IP)
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
@@ -25,7 +28,6 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'YOUR_EMAIL@gmail.com'     # ใส่อีเมลของคุณ
 app.config['MAIL_PASSWORD'] = 'YOUR_APP_PASSWORD'        # ใส่ App Password ของอีเมล
 
-# ดึงค่า Client ID และ Secret จาก Environment Variables (ปลอดภัย ไม่โดน GitHub บล็อก)
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
 
@@ -42,7 +44,7 @@ google = oauth.register(
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     authorize_params=None,
     api_base_url='https://www.googleapis.com/oauth2/v1/',
-    jwks_uri='https://www.googleapis.com/oauth2/v3/certs',  # แก้ปัญหา Missing jwks_uri
+    jwks_uri='https://www.googleapis.com/oauth2/v3/certs',
     client_kwargs={'scope': 'openid email profile'},
 )
 
@@ -66,14 +68,17 @@ class Medication(db.Model):
     doctor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     med_name = db.Column(db.String(100), nullable=False)
     dosage = db.Column(db.String(50)) 
-    instruction = db.Column(db.String(50)) # เช่น หลังอาหารเช้า
-    time_to_take = db.Column(db.String(10)) # เก็บเวลาเป็น HH:MM
-    
+    instruction = db.Column(db.String(50)) 
+    time_to_take = db.Column(db.String(10)) 
+    image_file = db.Column(db.String(255), nullable=True) # เพิ่มบรรทัดนี้
+    # เชื่อมความสัมพันธ์เพื่อดึงชื่อคนไข้มาโชว์ง่ายๆ
+    patient = db.relationship('User', foreign_keys=[patient_id])
+
 class MedLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     med_id = db.Column(db.Integer, db.ForeignKey('medication.id'))
     date_logged = db.Column(db.Date, default=datetime.utcnow().date)
-    status = db.Column(db.String(20), default='pending') # taken, pending
+    status = db.Column(db.String(20), default='pending') 
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -94,6 +99,7 @@ def doctor_required(f):
 @login_required
 def index():
     if current_user.role == 'doctor':
+        # ดึงรายชื่อคนไข้ทั้งหมดไปแสดงให้หมอเลือกใน Dropdown
         patients = User.query.filter_by(role='patient').all()
         meds = Medication.query.filter_by(doctor_id=current_user.id).all()
         return render_template('doctor_dash.html', patients=patients, meds=meds)
@@ -111,7 +117,8 @@ def login():
 def login_role(role):
     session['temp_role'] = role
     redirect_uri = url_for('authorize', _external=True)
-    return google.authorize_redirect(redirect_uri)
+    # เพิ่ม prompt='select_account' เพื่อบังคับให้ผู้ใช้เลือกอีเมลเสมอ
+    return google.authorize_redirect(redirect_uri, prompt='select_account')
 
 @app.route('/authorize')
 def authorize():
@@ -119,7 +126,10 @@ def authorize():
     resp = google.get('userinfo')
     user_info = resp.json()
     
+    # เช็คว่ามีอีเมลนี้ในฐานข้อมูลหรือยัง
     user = User.query.filter_by(email=user_info['email']).first()
+    
+    # ถ้ายืนยันอีเมลครั้งแรก ให้สร้างบัญชีและใส่ role ตามที่กดปุ่มมา
     if not user:
         role = session.get('temp_role', 'patient')
         user = User(google_id=user_info['id'], email=user_info['email'], name=user_info['name'], role=role)
@@ -148,8 +158,25 @@ def assign_med():
     instruction = request.form.get('instruction')
     time_to_take = request.form.get('time_to_take')
     
-    new_med = Medication(patient_id=patient_id, doctor_id=current_user.id, 
-                         med_name=med_name, dosage=dosage, instruction=instruction, time_to_take=time_to_take)
+    if not patient_id:
+        flash('กรุณาเลือกคนไข้ที่ต้องการจ่ายยา', 'danger')
+        return redirect(url_for('index'))
+        
+    # จัดการเซฟไฟล์รูปภาพ (ถ้ามีการอัปโหลด)
+    image_file = None
+    if 'med_image' in request.files:
+        file = request.files['med_image']
+        if file.filename != '':
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            image_file = filename
+            
+    new_med = Medication(
+        patient_id=patient_id, doctor_id=current_user.id, 
+        med_name=med_name, dosage=dosage, instruction=instruction, 
+        time_to_take=time_to_take, image_file=image_file # เพิ่ม image_file ตรงนี้
+    )
+    
     db.session.add(new_med)
     db.session.commit()
     flash('จ่ายยาให้คนไข้เรียบร้อยแล้ว!', 'success')

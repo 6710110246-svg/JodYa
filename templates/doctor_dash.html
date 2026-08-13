@@ -6,11 +6,12 @@
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">📝 สั่งจ่ายยาใหม่</div>
             <div class="card-body">
-                <form action="{{ url_for('assign_med') }}" method="POST">
+                <!-- สำคัญ: ต้องมี enctype="multipart/form-data" ระบบถึงจะยอมให้ส่งไฟล์รูปภาพได้ -->
+                <form action="{{ url_for('assign_med') }}" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label>เลือกคนไข้</label>
                         <select name="patient_id" class="form-control" required>
-                            <option value="">-- เลือกคนไข้ --</option>
+                            <option value="" disabled selected>-- เลือกคนไข้ --</option>
                             {% for p in patients %}
                                 <option value="{{ p.id }}">{{ p.name }} ({{ p.email }})</option>
                             {% endfor %}
@@ -19,6 +20,11 @@
                     <div class="mb-3">
                         <label>ชื่อยา</label>
                         <input type="text" name="med_name" class="form-control" required>
+                    </div>
+                    <!-- ช่องสำหรับอัปโหลดรูปภาพยา -->
+                    <div class="mb-3">
+                        <label>รูปภาพยา (ไม่บังคับ)</label>
+                        <input type="file" name="med_image" class="form-control" accept="image/*">
                     </div>
                     <div class="mb-3">
                         <label>ปริมาณ (เช่น 1 เม็ด)</label>
@@ -43,9 +49,10 @@
         <div class="card shadow-sm">
             <div class="card-header bg-dark text-white">ประวัติการสั่งยาของคนไข้ในความดูแล</div>
             <div class="card-body">
-                <table class="table">
+                <table class="table align-middle">
                     <thead>
                         <tr>
+                            <th>รูปยา</th>
                             <th>ชื่อยา</th>
                             <th>คนไข้</th>
                             <th>ปริมาณ</th>
@@ -55,8 +62,16 @@
                     <tbody>
                         {% for med in meds %}
                         <tr>
+                            <!-- คอลัมน์แสดงรูปภาพยา -->
+                            <td>
+                                {% if med.image_file %}
+                                    <img src="{{ url_for('static', filename='uploads/' + med.image_file) }}" alt="Med Image" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                {% else %}
+                                    <span class="text-muted" style="font-size: 0.8em;">ไม่มีรูป</span>
+                                {% endif %}
+                            </td>
                             <td>{{ med.med_name }}</td>
-                            <td>ID: {{ med.patient_id }}</td>
+                            <td>{{ med.patient.name }}</td> <!-- ดึงชื่อคนไข้มาแสดงแทน ID -->
                             <td>{{ med.dosage }} ({{ med.instruction }})</td>
                             <td>{{ med.time_to_take }}</td>
                         </tr>
