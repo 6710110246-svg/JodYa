@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+    <!-- ฟอร์มสั่งยา -->
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">📝 สั่งจ่ายยาใหม่</div>
+            <div class="card-body">
+                <form action="{{ url_for('assign_med') }}" method="POST">
+                    <div class="mb-3">
+                        <label>เลือกคนไข้</label>
+                        <select name="patient_id" class="form-control" required>
+                            <option value="">-- เลือกคนไข้ --</option>
+                            {% for p in patients %}
+                                <option value="{{ p.id }}">{{ p.name }} ({{ p.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>ชื่อยา</label>
+                        <input type="text" name="med_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>ปริมาณ (เช่น 1 เม็ด)</label>
+                        <input type="text" name="dosage" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>คำแนะนำ (เช่น หลังอาหาร)</label>
+                        <input type="text" name="instruction" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>เวลาที่ต้องทาน (HH:MM)</label>
+                        <input type="time" name="time_to_take" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">บันทึกและแจ้งเตือนคนไข้</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ประวัติการสั่งยา -->
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">ประวัติการสั่งยาของคนไข้ในความดูแล</div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ชื่อยา</th>
+                            <th>คนไข้</th>
+                            <th>ปริมาณ</th>
+                            <th>เวลาเตือน</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for med in meds %}
+                        <tr>
+                            <td>{{ med.med_name }}</td>
+                            <td>ID: {{ med.patient_id }}</td>
+                            <td>{{ med.dosage }} ({{ med.instruction }})</td>
+                            <td>{{ med.time_to_take }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

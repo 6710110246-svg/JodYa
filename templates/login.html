@@ -1,106 +1,22 @@
-<!DOCTYPE html>
-<html lang="th">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เข้าสู่ระบบ</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            background: #dae0e6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .box {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            text-align: center;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #0079d3;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background: #005fa3;
-        }
-
-        .error {
-            color: red;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="box">
-        <h2>🔐 เข้าสู่ระบบ</h2>
-
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        {% for message in messages %}
-        <div class="error">{{ message }}</div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-
-        <form method="POST">
-            <input type="text" name="username" placeholder="ชื่อผู้ใช้" required>
-            <input type="password" name="password" placeholder="รหัสผ่าน" required>
-            <button type="submit">Login</button>
-        </form>
-
-        <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
-            <a href="{{ url_for('login_google') }}" style="text-decoration: none;">
-                <button type="button"
-                    style="background: white; color: #444; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: normal;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48"
-                        style="display: block;">
-                        <path fill="#EA4335"
-                            d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-                        <path fill="#4285F4"
-                            d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-                        <path fill="#FBBC05"
-                            d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-                        <path fill="#34A853"
-                            d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-                        <path fill="none" d="M0 0h48v48H0z" />
-                    </svg>
-                    Sign in with Google
-                </button>
-            </a>
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 text-center mt-5">
+        <div class="card shadow">
+            <div class="card-body py-5">
+                <h2 class="mb-4">เข้าสู่ระบบ JodYa</h2>
+                <p class="text-muted mb-4">กรุณาเลือกสถานะของคุณเพื่อเข้าใช้งาน</p>
+                
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('login_role', role='patient') }}" class="btn btn-outline-success btn-lg">
+                        👨‍🦽 เข้าสู่ระบบสำหรับ <b>ผู้ป่วย</b> (Patient)
+                    </a>
+                    <a href="{{ url_for('login_role', role='doctor') }}" class="btn btn-outline-primary btn-lg">
+                        👨‍⚕️ เข้าสู่ระบบสำหรับ <b>แพทย์</b> (Doctor)
+                    </a>
+                </div>
+            </div>
         </div>
-
-        <p style="font-size: 12px; margin-top: 20px;">
-            ยังไม่มีบัญชี? <a href="/register">สมัครสมาชิก</a>
-        </p>
-        <a href="/" style="font-size: 12px; text-decoration: none; color: #666;">← กลับหน้าหลัก</a>
     </div>
-</body>
-
-</html>
+</div>
+{% endblock %}

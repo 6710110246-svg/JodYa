@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>รายการยาที่ต้องทานวันนี้</h3>
+<hr>
+<div class="row">
+    {% for med in meds %}
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h5 class="card-title text-primary">{{ med.med_name }}</h5>
+                <p class="card-text mb-1"><strong>จำนวน:</strong> {{ med.dosage }}</p>
+                <p class="card-text mb-1"><strong>วิธีทาน:</strong> {{ med.instruction }}</p>
+                <p class="card-text mb-3"><strong>เวลาเตือน:</strong> ⏰ {{ med.time_to_take }}</p>
+                
+                {% if logs.get(med.id) == 'taken' %}
+                    <button class="btn btn-success w-100" disabled>✅ ทานยาแล้ว</button>
+                {% else %}
+                    <a href="{{ url_for('take_med', med_id=med.id) }}" class="btn btn-warning w-100">ยืนยันการทานยา</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center text-muted mt-5">
+        <h5>🎉 ยังไม่มีรายการยาที่คุณต้องทานครับ</h5>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

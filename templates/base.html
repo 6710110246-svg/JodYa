@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>JodYa - ระบบจัดการและเตือนกินยา</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">💊 JodYa (จดยา)</a>
+            {% if current_user.is_authenticated %}
+                <div class="d-flex text-white align-items-center">
+                    <span class="me-3">สวัสดี, {{ current_user.name }} ({{ 'แพทย์' if current_user.role == 'doctor' else 'ผู้ป่วย' }})</span>
+                    <a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">ออกจากระบบ</a>
+                </div>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

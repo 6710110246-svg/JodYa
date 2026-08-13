@@ -6,3 +6,4 @@ flask-sqlalchemy
 Authlib
 requests
 Flask-Mail
+APScheduler
