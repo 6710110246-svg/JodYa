@@ -9,8 +9,7 @@ from flask_mail import Mail, Message as MailMessage
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
 
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 # ตั้งค่าให้ OAuth ยอมรับ HTTP (สำหรับ dev/IP)
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
@@ -18,7 +17,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret-jodya-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///jodya.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # ==========================================
 # ตั้งค่า Email & Google OAuth
 # ==========================================
