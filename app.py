@@ -8,13 +8,16 @@ from flask_mail import Mail, Message as MailMessage
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
 
+# ตั้งค่าให้ OAuth ยอมรับ HTTP (สำหรับ dev/IP)
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret-jodya-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///jodya.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # ==========================================
-# ตั้งค่า Email & Google OAuth (ใส่รหัสของคุณ)
+# ตั้งค่า Email & Google OAuth
 # ==========================================
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -22,9 +25,9 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'YOUR_EMAIL@gmail.com'     # ใส่อีเมลของคุณ
 app.config['MAIL_PASSWORD'] = 'YOUR_APP_PASSWORD'        # ใส่ App Password ของอีเมล
 
+# ดึงค่า Client ID และ Secret จาก Environment Variables (ปลอดภัย ไม่โดน GitHub บล็อก)
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 db = SQLAlchemy(app)
 mail = Mail(app)
@@ -39,6 +42,7 @@ google = oauth.register(
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     authorize_params=None,
     api_base_url='https://www.googleapis.com/oauth2/v1/',
+    jwks_uri='https://www.googleapis.com/oauth2/v3/certs',  # แก้ปัญหา Missing jwks_uri
     client_kwargs={'scope': 'openid email profile'},
 )
 
@@ -47,16 +51,6 @@ login_manager.login_view = 'login'
 login_manager.init_app(app)
 
 # ==========================================
-
-google = oauth.register(
-    name='google',
-    client_id=app.config['GOOGLE_CLIENT_ID'],
-    client_secret=app.config['GOOGLE_CLIENT_SECRET'],
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    jwks_uri='https://www.googleapis.com/oauth2/v3/certs',  # เพิ่มบรรทัดนี้เข้าไป
-    client_kwargs={'scope': 'openid email profile'}
-)
-
 # Database Models
 # ==========================================
 class User(db.Model, UserMixin):
@@ -196,24 +190,19 @@ def check_medication_reminders():
             patient = User.query.get(med.patient_id)
             if not patient or not patient.email: continue
             
-            # เช็คว่าวันนี้กินยานี้ไปหรือยัง ถ้ากินแล้วไม่ต้องเตือน
             log = MedLog.query.filter_by(med_id=med.id, date_logged=today).first()
             if log and log.status == 'taken':
                 continue
 
-            # 1. เตือนล่วงหน้า 2 นาที
             if med.time_to_take == time_plus_2_str:
                 subject = f"⏳ เตรียมตัวกินยา: {med.med_name}"
                 body = f"สวัสดีคุณ {patient.name}, อีก 2 นาทีจะถึงเวลากินยา {med.med_name} จำนวน {med.dosage} ({med.instruction}) แล้วนะครับ เตรียมยาไว้ได้เลย!"
                 mail.send(MailMessage(subject, sender=app.config['MAIL_USERNAME'], recipients=[patient.email], body=body))
-                print(f"Sent 2-min warning to {patient.email}")
 
-            # 2. เตือนตรงเวลา
             elif med.time_to_take == current_time_str:
                 subject = f"💊 ถึงเวลากินยาแล้ว!: {med.med_name}"
                 body = f"ถึงเวลากินยา {med.med_name} แล้วครับ! กินเสร็จแล้วอย่าลืมเข้ามาที่เว็บ JodYa เพื่อกดยืนยันด้วยนะครับ"
                 mail.send(MailMessage(subject, sender=app.config['MAIL_USERNAME'], recipients=[patient.email], body=body))
-                print(f"Sent ON-TIME reminder to {patient.email}")
 
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(check_medication_reminders, 'interval', minutes=1)
@@ -221,5 +210,5 @@ scheduler.start()
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all() # สร้างตารางฐานข้อมูลอัตโนมัติเมื่อรันครั้งแรก
+        db.create_all()
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
