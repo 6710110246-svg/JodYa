@@ -98,11 +98,11 @@ def index():
 def login():
     return render_template('login.html')
 
-@app.route('/login/role')
+@app.route('/login/<role>')
 def login_role(role):
-    # คงฟังก์ชัน route ไว้รองรับลิงก์เดิม แต่กดอันไหนก็เข้าสู่ระบบปกติได้เลย
+    session['temp_role'] = role
     return google.authorize_redirect(url_for('authorize', _external=True), prompt='select_account')
-
+    
 @app.route('/authorize')
 def authorize():
     token = google.authorize_access_token()
