@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="row">
-    <!-- ฟอร์มสั่งยา: มือถือใช้เต็ม 12 ส่วน, คอมใช้ 4 ส่วน -->
+    <!-- ฟอร์มสั่งยา -->
     <div class="col-12 col-lg-4 mb-4">
         <div class="card shadow-sm border-0" style="border-radius: 15px;">
             <div class="card-header bg-primary text-white py-3" style="border-radius: 15px 15px 0 0;">
@@ -27,9 +27,22 @@
                         <input type="file" name="med_image" class="form-control" accept="image/*">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">ปริมาณ (เช่น 1 เม็ด)</label>
+                        <label class="form-label fw-bold">ปริมาณต่อมื้อ (เช่น 1 เม็ด)</label>
                         <input type="text" name="dosage" class="form-control" required>
                     </div>
+                    
+                    <!-- ช่องกรอกจำนวนรวมและจำนวนวัน -->
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">จำนวนยาทั้งหมด</label>
+                            <input type="number" name="total_pills" class="form-control" value="10" min="1" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">จำนวนวันที่ทาน</label>
+                            <input type="number" name="duration_days" class="form-control" value="5" min="1" required>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label fw-bold">คำแนะนำ (เช่น หลังอาหาร)</label>
                         <input type="text" name="instruction" class="form-control" required>
@@ -38,20 +51,19 @@
                         <label class="form-label fw-bold">เวลาที่ต้องทาน (HH:MM)</label>
                         <input type="time" name="time_to_take" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold">บันทึกและแจ้งเตือน</button>
+                    <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold">บันทึกและตั้งเวลาแจ้งเตือน</button>
                 </form>
             </div>
         </div>
     </div>
     
-    <!-- ประวัติการสั่งยา: มือถือใช้เต็ม 12 ส่วน, คอมใช้ 8 ส่วน -->
+    <!-- ประวัติการสั่งยา -->
     <div class="col-12 col-lg-8">
         <div class="card shadow-sm border-0" style="border-radius: 15px;">
             <div class="card-header bg-dark text-white py-3" style="border-radius: 15px 15px 0 0;">
                 <h5 class="mb-0">ประวัติการสั่งยาของคนไข้</h5>
             </div>
             <div class="card-body p-0">
-                <!-- ใส่ table-responsive ให้เลื่อนซ้ายขวาในมือถือได้ -->
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0" style="min-width: 600px;">
                         <thead class="table-light">
@@ -59,7 +71,7 @@
                                 <th class="px-3">รูปยา</th>
                                 <th>ชื่อยา</th>
                                 <th>คนไข้</th>
-                                <th>ปริมาณ</th>
+                                <th>จำนวน / ระยะเวลา</th>
                                 <th class="px-3">เวลาเตือน</th>
                             </tr>
                         </thead>
@@ -74,8 +86,11 @@
                                     {% endif %}
                                 </td>
                                 <td class="fw-bold text-primary">{{ med.med_name }}</td>
-                                <td>{{ med.patient.name }}</td>
-                                <td>{{ med.dosage }} <br><small class="text-muted">{{ med.instruction }}</small></td>
+                                <td class="text-dark">{{ med.patient.name }}</td>
+                                <td>
+                                    {{ med.dosage }} <br>
+                                    <small class="text-muted">ทั้งหมด {{ med.total_pills }} เม็ด (ทาน {{ med.duration_days }} วัน)</small>
+                                </td>
                                 <td class="px-3 text-danger fw-bold">⏰ {{ med.time_to_take }}</td>
                             </tr>
                             {% endfor %}

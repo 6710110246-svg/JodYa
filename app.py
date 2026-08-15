@@ -66,15 +66,17 @@ class User(db.Model, UserMixin):
 
 class Medication(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    doctor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     med_name = db.Column(db.String(100), nullable=False)
-    dosage = db.Column(db.String(50)) 
-    instruction = db.Column(db.String(50)) 
-    time_to_take = db.Column(db.String(10)) 
-    image_file = db.Column(db.String(255), nullable=True) # เพิ่มบรรทัดนี้
-    # เชื่อมความสัมพันธ์เพื่อดึงชื่อคนไข้มาโชว์ง่ายๆ
-    patient = db.relationship('User', foreign_keys=[patient_id])
+    dosage = db.Column(db.String(50), nullable=False)
+    instruction = db.Column(db.String(100), nullable=False)
+    time_to_take = db.Column(db.String(10), nullable=False)
+    image_file = db.Column(db.String(100), nullable=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # เพิ่มฟิลด์สำหรับกำหนดระยะเวลาการทานยา
+    total_pills = db.Column(db.Integer, default=10)
+    duration_days = db.Column(db.Integer, default=5)
+    start_date = db.Column(db.Date, default=date.today)
 
 class MedLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -152,37 +154,46 @@ def logout():
 # ==========================================
 @app.route('/assign_med', methods=['POST'])
 @login_required
-@doctor_required
 def assign_med():
+    if current_user.role != 'doctor':
+        flash('เฉพาะแพทย์เท่านั้นที่สามารถสั่งจ่ายยาได้', 'danger')
+        return redirect(url_for('index'))
+        
     patient_id = request.form.get('patient_id')
     med_name = request.form.get('med_name')
     dosage = request.form.get('dosage')
     instruction = request.form.get('instruction')
     time_to_take = request.form.get('time_to_take')
     
-    if not patient_id:
-        flash('กรุณาเลือกคนไข้ที่ต้องการจ่ายยา', 'danger')
-        return redirect(url_for('index'))
-        
-    # จัดการเซฟไฟล์รูปภาพ (ถ้ามีการอัปโหลด)
+    # รับค่าจำนวนยาและจำนวนวันที่ต้องทานจากฟอร์ม
+    total_pills = int(request.form.get('total_pills', 10))
+    duration_days = int(request.form.get('duration_days', 5))
+    
     image_file = None
     if 'med_image' in request.files:
         file = request.files['med_image']
-        if file.filename != '':
+        if file and file.filename != '':
             filename = secure_filename(file.filename)
+            filename = f"{int(datetime.utcnow().timestamp())}_{filename}"
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             image_file = filename
             
     new_med = Medication(
-        patient_id=patient_id, doctor_id=current_user.id, 
-        med_name=med_name, dosage=dosage, instruction=instruction, 
-        time_to_take=time_to_take, image_file=image_file # เพิ่ม image_file ตรงนี้
+        med_name=med_name,
+        dosage=dosage,
+        instruction=instruction,
+        time_to_take=time_to_take,
+        image_file=image_file,
+        patient_id=patient_id,
+        total_pills=total_pills,
+        duration_days=duration_days,
+        start_date=date.today() # บันทึกวันที่เริ่มจ่ายยาปัจจุบัน
     )
-    
     db.session.add(new_med)
     db.session.commit()
-    flash('จ่ายยาให้คนไข้เรียบร้อยแล้ว!', 'success')
-    return redirect(url_for('index'))
+    
+    flash('สั่งจ่ายยาและตั้งระบบแจ้งเตือนตามกำหนดเรียบร้อย!', 'success')
+    return redirect(url_for('doctor_dash'))
 
 @app.route('/take_med/<int:med_id>')
 @login_required
@@ -208,31 +219,34 @@ def take_med(med_id):
 # Background Scheduler (แจ้งเตือนอีเมล)
 # ==========================================
 def check_medication_reminders():
-    with app.app_context(): 
+    with app.app_context():
         now = datetime.now()
-        current_time_str = now.strftime("%H:%M")
-        time_plus_2_str = (now + timedelta(minutes=2)).strftime("%H:%M")
-        today = now.date()
-
-        medications = Medication.query.all()
-        for med in medications:
-            patient = User.query.get(med.patient_id)
-            if not patient or not patient.email: continue
+        current_time = now.strftime('%H:%M')
+        today = date.today()
+        
+        meds = Medication.query.all()
+        for med in meds:
+            # คำนวณวันสิ้นสุดการกินยา
+            if med.start_date and med.duration_days:
+                end_date = med.start_date + timedelta(days=med.duration_days)
+                # ถ้าวันนี้เลยวันสิ้นสุดไปแล้ว ให้ข้าม (หยุดส่งเมลเตือน)
+                if not (med.start_date <= today <= end_date):
+                    continue
             
-            log = MedLog.query.filter_by(med_id=med.id, date_logged=today).first()
-            if log and log.status == 'taken':
-                continue
-
-            if med.time_to_take == time_plus_2_str:
-                subject = f"⏳ เตรียมตัวกินยา: {med.med_name}"
-                body = f"สวัสดีคุณ {patient.name}, อีก 2 นาทีจะถึงเวลากินยา {med.med_name} จำนวน {med.dosage} ({med.instruction}) แล้วนะครับ เตรียมยาไว้ได้เลย!"
-                mail.send(MailMessage(subject, sender=app.config['MAIL_USERNAME'], recipients=[patient.email], body=body))
-
-            elif med.time_to_take == current_time_str:
-                subject = f"💊 ถึงเวลากินยาแล้ว!: {med.med_name}"
-                body = f"ถึงเวลากินยา {med.med_name} แล้วครับ! กินเสร็จแล้วอย่าลืมเข้ามาที่เว็บ JodYa เพื่อกดยืนยันด้วยนะครับ"
-                mail.send(MailMessage(subject, sender=app.config['MAIL_USERNAME'], recipients=[patient.email], body=body))
-
+            # ถ้าตรงเวลาและยังอยู่ในช่วงวันที่กำหนด ส่งเมลแจ้งเตือน
+            if med.time_to_take == current_time:
+                patient = User.query.get(med.patient_id)
+                if patient and patient.email:
+                    try:
+                        msg = Message(
+                            subject=f"💊 ถึงเวลาทานยาแล้ว: {med.med_name}",
+                            sender=app.config['MAIL_USERNAME'],
+                            recipients=[patient.email]
+                        )
+                        msg.body = f"สวัสดีคุณ {patient.name},\n\nถึงเวลาทานยา '{med.med_name}' จำนวน {med.dosage}\nคำแนะนำ: {med.instruction}\n\nขอให้มีสุขภาพแข็งแรงครับ"
+                        mail.send(msg)
+                    except Exception as e:
+                        print(f"Error sending email: {e}")
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(check_medication_reminders, 'interval', minutes=1)
 scheduler.start()
