@@ -41,6 +41,7 @@ google = oauth.register(
     client_id=GOOGLE_CLIENT_ID,
     client_secret=GOOGLE_CLIENT_SECRET,
     access_token_url='https://accounts.google.com/o/oauth2/token',
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
     api_base_url='https://www.googleapis.com/oauth2/v1/',
     client_kwargs={'scope': 'openid email profile'},
 )
@@ -102,7 +103,7 @@ def login():
 def login_role(role):
     session['temp_role'] = role
     return google.authorize_redirect(url_for('authorize', _external=True), prompt='select_account')
-    
+
 @app.route('/authorize')
 def authorize():
     token = google.authorize_access_token()
