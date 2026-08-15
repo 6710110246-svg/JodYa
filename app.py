@@ -72,7 +72,7 @@ class Medication(db.Model):
     time_to_take = db.Column(db.String(10), nullable=False)
     image_file = db.Column(db.String(100), nullable=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
+    doctor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     # เพิ่มฟิลด์สำหรับกำหนดระยะเวลาการทานยา
     total_pills = db.Column(db.Integer, default=10)
     duration_days = db.Column(db.Integer, default=5)
