@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<!-- แถบเลือกภาษา (จัดให้อยู่ขวาบน) -->
+<!-- แถบเลือกภาษา (ขวาบน) -->
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="mb-0" data-translate="header">รายการยาที่ต้องทานวันนี้</h4>
+    <h4 class="mb-0 fw-bold text-primary" data-translate="header">📋 จัดการรายการยาของฉัน</h4>
     <div class="d-flex gap-2">
         <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="setLanguage('th')">🇹🇭 ไทย</button>
         <button class="btn btn-outline-success btn-sm rounded-pill px-3" onclick="setLanguage('rumi')">Rumi</button>
@@ -13,86 +13,120 @@
 <hr>
 
 <div class="row">
-    {% if meds %}
-        {% for med in meds %}
-        <!-- ใช้ col-12 สำหรับมือถือให้การ์ดเต็มจอ, col-md-4 สำหรับคอม -->
-        <div class="col-12 col-md-6 col-lg-4 mb-4">
-            <div class="card shadow-sm h-100 border-0" style="border-radius: 15px; overflow: hidden;">
-                
-                {% if med.image_file %}
-                    <img src="{{ url_for('static', filename='uploads/' + med.image_file) }}" class="card-img-top" alt="Med Image" style="height: 200px; object-fit: cover;">
-                {% else %}
-                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center text-muted" style="height: 200px;">
-                        <span style="font-size: 0.9em;" data-translate="no_image">(ไม่มีรูปภาพประกอบ)</span>
+    <!-- ฝั่งซ้าย: ฟอร์มให้คนไข้เพิ่มยาเอง -->
+    <div class="col-12 col-lg-4 mb-4">
+        <div class="card shadow-sm border-0" style="border-radius: 15px;">
+            <div class="card-header bg-primary text-white py-3" style="border-radius: 15px 15px 0 0;">
+                <h5 class="mb-0">➕ เพิ่มรายการยาใหม่</h5>
+            </div>
+            <div class="card-body p-4">
+                <form action="{{ url_for('add_med') }}" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ชื่อยา</label>
+                        <input type="text" name="med_name" class="form-control" placeholder="เช่น พาราเซตามอล" required>
                     </div>
-                {% endif %}
-                
-                <div class="card-body d-flex flex-column">
-                    <h4 class="card-title text-primary mb-3">{{ med.med_name }}</h4>
-                    <p class="card-text mb-2"><strong data-translate="dosage">จำนวน:</strong> <span class="text-dark">{{ med.dosage }}</span></p>
-                    <p class="card-text mb-2"><strong data-translate="instruction">วิธีทาน:</strong> <span class="text-dark">{{ med.instruction }}</span></p>
-                    <p class="card-text mb-4"><strong data-translate="time">เวลาเตือน:</strong> <span class="text-danger fw-bold">⏰ {{ med.time_to_take }}</span></p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">รูปภาพยา (ถ้ามี)</label>
+                        <input type="file" name="med_image" class="form-control" accept="image/*">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ปริมาณต่อมื้อ (เช่น 1 เม็ด)</label>
+                        <input type="text" name="dosage" class="form-control" required>
+                    </div>
                     
-                    <!-- ขยายปุ่มให้ใหญ่ขึ้น (py-2) สำหรับกดบนมือถือ -->
-                    <div class="mt-auto">
-                        {% if logs.get(med.id) == 'taken' %}
-                            <button class="btn btn-success w-100 py-2" disabled data-translate="taken">✅ ทานยาแล้ว</button>
-                        {% else %}
-                            <a href="{{ url_for('take_med', med_id=med.id) }}" class="btn btn-warning w-100 py-2 fw-bold" data-translate="confirm">ยืนยันการทานยา</a>
-                        {% endif %}
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">จำนวนยาทั้งหมด</label>
+                            <input type="number" name="total_pills" class="form-control" value="10" min="1" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">จำนวนวันที่ทาน</label>
+                            <input type="number" name="duration_days" class="form-control" value="5" min="1" required>
+                        </div>
                     </div>
-                </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">คำแนะนำ (เช่น หลังอาหาร)</label>
+                        <input type="text" name="instruction" class="form-control" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">เวลาที่ต้องทาน (HH:MM)</label>
+                        <input type="time" name="time_to_take" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold">บันทึกยาและตั้งแจ้งเตือน</button>
+                </form>
             </div>
         </div>
-        {% endfor %}
-    {% else %}
-        <div class="col-12 text-center mt-5 text-muted">
-            <h5 data-translate="empty">🎉 ยังไม่มีรายการยาที่คุณต้องทานครับ</h5>
+    </div>
+
+    <!-- ฝั่งขวา: แสดงการ์ดรายการยา -->
+    <div class="col-12 col-lg-8">
+        <h5 class="mb-3 fw-bold text-secondary">รายการยาที่คุณต้องทาน</h5>
+        <div class="row">
+            {% if meds %}
+                {% for med in meds %}
+                <div class="col-12 col-md-6 mb-4">
+                    <div class="card shadow-sm h-100 border-0" style="border-radius: 15px; overflow: hidden;">
+                        {% if med.image_file %}
+                            <img src="{{ url_for('static', filename='uploads/' + med.image_file) }}" class="card-img-top" alt="Med Image" style="height: 180px; object-fit: cover;">
+                        {% else %}
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center text-muted" style="height: 180px;">
+                                <span style="font-size: 0.9em;" data-translate="no_image">(ไม่มีรูปภาพประกอบ)</span>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h4 class="card-title text-primary mb-3">{{ med.med_name }}</h4>
+                            <p class="card-text mb-2"><strong data-translate="dosage">จำนวน:</strong> <span class="text-dark">{{ med.dosage }}</span></p>
+                            <p class="card-text mb-2"><strong data-translate="instruction">วิธีทาน:</strong> <span class="text-dark">{{ med.instruction }}</span></p>
+                            <p class="card-text mb-2"><strong data-translate="duration">ระยะเวลา:</strong> <span class="text-dark">ทั้งหมด {{ med.total_pills }} เม็ด ({{ med.duration_days }} วัน)</span></p>
+                            <p class="card-text mb-3"><strong data-translate="time">เวลาเตือน:</strong> <span class="text-danger fw-bold">⏰ {{ med.time_to_take }}</span></p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-center mt-5 text-muted">
+                    <h5 data-translate="empty">🎉 ยังไม่มีรายการยาที่คุณบันทึกไว้ครับ</h5>
+                </div>
+            {% endif %}
         </div>
-    {% endif %}
+    </div>
 </div>
 
-<!-- Script สำหรับระบบแปลภาษา (ฝั่ง Client) -->
+<!-- Script แปลภาษา -->
 <script>
-    // พจนานุกรมแปลภาษา
     const translations = {
         'th': {
-            'header': 'รายการยาที่ต้องทานวันนี้',
+            'header': '📋 จัดการรายการยาของฉัน',
             'no_image': '(ไม่มีรูปภาพประกอบ)',
             'dosage': 'จำนวน:',
             'instruction': 'วิธีทาน:',
+            'duration': 'ระยะเวลา:',
             'time': 'เวลาเตือน:',
-            'taken': '✅ ทานยาแล้ว',
-            'confirm': 'ยืนยันการทานยา',
-            'empty': '🎉 ยังไม่มีรายการยาที่คุณต้องทานครับ'
+            'empty': '🎉 ยังไม่มีรายการยาที่คุณบันทึกไว้ครับ'
         },
         'rumi': {
-            'header': 'Senarai Ubat Hari Ini',
+            'header': '📋 Urus Senarai Ubat Saya',
             'no_image': '(Tiada gambar)',
             'dosage': 'Kuantiti:',
             'instruction': 'Cara makan:',
+            'tempoh': 'Tempoh:',
             'time': 'Masa:',
-            'taken': '✅ Sudah makan',
-            'confirm': 'Sahkan',
-            'empty': '🎉 Tiada ubat untuk hari ini'
+            'empty': '🎉 Tiada ubat yang direkodkan'
         },
         'jawi': {
-            'header': 'سناراي اوبت هاري اين',
+            'header': '📋 اوروس سناراي اوبت ساي',
             'no_image': '(تياد ݢمبر)',
             'dosage': 'کوانتيتي:',
             'instruction': 'چارا ماکن:',
             'time': 'ماس:',
-            'taken': '✅ سوده ماکن',
-            'confirm': 'صحکن',
-            'empty': '🎉 تياد اوبت اونتوق هاري اين'
+            'empty': '🎉 تياد اوبت يڠ دريكودکن'
         }
     };
 
     function setLanguage(lang) {
-        // บันทึกภาษาลงใน LocalStorage
         localStorage.setItem('jodya_lang', lang);
-        
-        // กวาดหาทุก tag ที่มี data-translate และแทนที่ด้วยข้อความใหม่
         document.querySelectorAll('[data-translate]').forEach(element => {
             const key = element.getAttribute('data-translate');
             if (translations[lang] && translations[lang][key]) {
@@ -101,7 +135,6 @@
         });
     }
 
-    // เมื่อโหลดหน้าเว็บเสร็จ ให้เช็กว่าเคยเลือกภาษาอะไรไว้ (ถ้าไม่เคย ให้เป็นภาษาไทย)
     document.addEventListener('DOMContentLoaded', () => {
         const savedLang = localStorage.getItem('jodya_lang') || 'th';
         setLanguage(savedLang);

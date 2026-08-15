@@ -8,8 +8,6 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from authlib.integrations.flask_client import OAuth
 from flask_mail import Mail, Message as MailMessage
 from apscheduler.schedulers.background import BackgroundScheduler
-from functools import wraps
-
 
 # ตั้งค่าให้ OAuth ยอมรับ HTTP (สำหรับ dev/IP)
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
@@ -21,14 +19,15 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///jodya.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 # ==========================================
 # ตั้งค่า Email & Google OAuth
 # ==========================================
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'YOUR_EMAIL@gmail.com'     # ใส่อีเมลของคุณ
-app.config['MAIL_PASSWORD'] = 'YOUR_APP_PASSWORD'        # ใส่ App Password ของอีเมล
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
@@ -42,11 +41,7 @@ google = oauth.register(
     client_id=GOOGLE_CLIENT_ID,
     client_secret=GOOGLE_CLIENT_SECRET,
     access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
     api_base_url='https://www.googleapis.com/oauth2/v1/',
-    jwks_uri='https://www.googleapis.com/oauth2/v3/certs',
     client_kwargs={'scope': 'openid email profile'},
 )
 
@@ -55,28 +50,27 @@ login_manager.login_view = 'login'
 login_manager.init_app(app)
 
 # ==========================================
-# Database Models
+# Database Models (ตัด role และ doctor ออก)
 # ==========================================
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     google_id = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     name = db.Column(db.String(150), nullable=False)
-    role = db.Column(db.String(20), default='patient') # 'doctor' หรือ 'patient'
 
 class Medication(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     med_name = db.Column(db.String(100), nullable=False)
-    dosage = db.Column(db.String(50), nullable=False)
-    instruction = db.Column(db.String(100), nullable=False)
-    time_to_take = db.Column(db.String(10), nullable=False)
-    image_file = db.Column(db.String(100), nullable=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    doctor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    # เพิ่มฟิลด์สำหรับกำหนดระยะเวลาการทานยา
+    dosage = db.Column(db.String(50)) 
+    instruction = db.Column(db.String(100)) 
+    time_to_take = db.Column(db.String(10)) 
+    image_file = db.Column(db.String(255), nullable=True)
     total_pills = db.Column(db.Integer, default=10)
     duration_days = db.Column(db.Integer, default=5)
     start_date = db.Column(db.Date, default=date.today)
+    
+    patient = db.relationship('User', foreign_keys=[patient_id])
 
 class MedLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -88,55 +82,35 @@ class MedLog(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-def doctor_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if current_user.role != 'doctor':
-            abort(403)
-        return f(*args, **kwargs)
-    return decorated_function
-
 # ==========================================
-# Routes (Auth & Dashboard)
+# Routes
 # ==========================================
 @app.route('/')
 @login_required
 def index():
-    if current_user.role == 'doctor':
-        # ดึงรายชื่อคนไข้ทั้งหมดไปแสดงให้หมอเลือกใน Dropdown
-        patients = User.query.filter_by(role='patient').all()
-        meds = Medication.query.filter_by(doctor_id=current_user.id).all()
-        return render_template('doctor_dash.html', patients=patients, meds=meds)
-    else:
-        meds = Medication.query.filter_by(patient_id=current_user.id).all()
-        today = datetime.now().date()
-        logs = {log.med_id: log.status for log in MedLog.query.filter_by(date_logged=today).all()}
-        return render_template('patient_dash.html', meds=meds, logs=logs)
+    # โหลดเฉพาะยาของคนที่ล็อกอินอยู่เข้ามาแสดง
+    meds = Medication.query.filter_by(patient_id=current_user.id).all()
+    today = datetime.now().date()
+    logs = {log.med_id: log.status for log in MedLog.query.filter_by(date_logged=today).all()}
+    return render_template('patient_dash.html', meds=meds, logs=logs)
 
 @app.route('/login')
 def login():
     return render_template('login.html')
 
-@app.route('/login/<role>')
+@app.route('/login/role')
 def login_role(role):
-    session['temp_role'] = role
-    redirect_uri = url_for('authorize', _external=True)
-    # เพิ่ม prompt='select_account' เพื่อบังคับให้ผู้ใช้เลือกอีเมลเสมอ
-    return google.authorize_redirect(redirect_uri, prompt='select_account')
+    # คงฟังก์ชัน route ไว้รองรับลิงก์เดิม แต่กดอันไหนก็เข้าสู่ระบบปกติได้เลย
+    return google.authorize_redirect(url_for('authorize', _external=True), prompt='select_account')
 
 @app.route('/authorize')
 def authorize():
     token = google.authorize_access_token()
-    resp = google.get('userinfo')
-    user_info = resp.json()
+    user_info = google.get('userinfo').json()
     
-    # เช็คว่ามีอีเมลนี้ในฐานข้อมูลหรือยัง
     user = User.query.filter_by(email=user_info['email']).first()
-    
-    # ถ้ายืนยันอีเมลครั้งแรก ให้สร้างบัญชีและใส่ role ตามที่กดปุ่มมา
     if not user:
-        role = session.get('temp_role', 'patient')
-        user = User(google_id=user_info['id'], email=user_info['email'], name=user_info['name'], role=role)
+        user = User(google_id=user_info['id'], email=user_info['email'], name=user_info['name'])
         db.session.add(user)
         db.session.commit()
         
@@ -150,50 +124,43 @@ def logout():
     return redirect(url_for('login'))
 
 # ==========================================
-# Routes (จัดการยา)
+# จัดการเพิ่มยา (คนไข้เพิ่มเอง)
 # ==========================================
-@app.route('/assign_med', methods=['POST'])
+@app.route('/add_med', methods=['POST'])
 @login_required
-def assign_med():
-    if current_user.role != 'doctor':
-        flash('เฉพาะแพทย์เท่านั้นที่สามารถสั่งจ่ายยาได้', 'danger')
-        return redirect(url_for('index'))
-        
-    patient_id = request.form.get('patient_id')
+def add_med():
     med_name = request.form.get('med_name')
     dosage = request.form.get('dosage')
     instruction = request.form.get('instruction')
     time_to_take = request.form.get('time_to_take')
-    
-    # รับค่าจำนวนยาและจำนวนวันที่ต้องทานจากฟอร์ม
     total_pills = int(request.form.get('total_pills', 10))
     duration_days = int(request.form.get('duration_days', 5))
     
     image_file = None
     if 'med_image' in request.files:
         file = request.files['med_image']
-        if file and file.filename != '':
+        if file.filename != '':
             filename = secure_filename(file.filename)
             filename = f"{int(datetime.utcnow().timestamp())}_{filename}"
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             image_file = filename
             
     new_med = Medication(
+        patient_id=current_user.id, # บันทึกเข้าไอดีคนไข้ที่กำลังล็อกอิน
         med_name=med_name,
         dosage=dosage,
         instruction=instruction,
         time_to_take=time_to_take,
-        image_file=image_file,
-        patient_id=patient_id,
         total_pills=total_pills,
         duration_days=duration_days,
-        start_date=date.today() # บันทึกวันที่เริ่มจ่ายยาปัจจุบัน
+        start_date=date.today(),
+        image_file=image_file
     )
+    
     db.session.add(new_med)
     db.session.commit()
-    
-    flash('สั่งจ่ายยาและตั้งระบบแจ้งเตือนตามกำหนดเรียบร้อย!', 'success')
-    return redirect(url_for('doctor_dash'))
+    flash('บันทึกรายการยาและตั้งเวลาแจ้งเตือนเรียบร้อย!', 'success')
+    return redirect(url_for('index'))
 
 @app.route('/take_med/<int:med_id>')
 @login_required
@@ -216,37 +183,31 @@ def take_med(med_id):
     return redirect(url_for('index'))
 
 # ==========================================
-# Background Scheduler (แจ้งเตือนอีเมล)
+# Background Scheduler (แจ้งเตือนอีเมล 5 วันอัตโนมัติ)
 # ==========================================
 def check_medication_reminders():
     with app.app_context():
         now = datetime.now()
-        current_time = now.strftime('%H:%M')
-        today = date.today()
-        
+        current_time_str = now.strftime("%H:%M")
+        today = now.date()
+
         meds = Medication.query.all()
         for med in meds:
-            # คำนวณวันสิ้นสุดการกินยา
-            if med.start_date and med.duration_days:
-                end_date = med.start_date + timedelta(days=med.duration_days)
-                # ถ้าวันนี้เลยวันสิ้นสุดไปแล้ว ให้ข้าม (หยุดส่งเมลเตือน)
-                if not (med.start_date <= today <= end_date):
-                    continue
-            
-            # ถ้าตรงเวลาและยังอยู่ในช่วงวันที่กำหนด ส่งเมลแจ้งเตือน
-            if med.time_to_take == current_time:
+            end_date = med.start_date + timedelta(days=med.duration_days)
+            if not (med.start_date <= today <= end_date):
+                continue # หมดกำหนดวันแล้วหยุดส่งเมล
+
+            if med.time_to_take == current_time_str:
                 patient = User.query.get(med.patient_id)
                 if patient and patient.email:
+                    subject = f"💊 ถึงเวลากินยาแล้ว: {med.med_name}"
+                    body = f"สวัสดีคุณ {patient.name}, ถึงเวลากินยา '{med.med_name}' จำนวน {med.dosage} ({med.instruction}) แล้วนะครับ"
                     try:
-                        msg = Message(
-                            subject=f"💊 ถึงเวลาทานยาแล้ว: {med.med_name}",
-                            sender=app.config['MAIL_USERNAME'],
-                            recipients=[patient.email]
-                        )
-                        msg.body = f"สวัสดีคุณ {patient.name},\n\nถึงเวลาทานยา '{med.med_name}' จำนวน {med.dosage}\nคำแนะนำ: {med.instruction}\n\nขอให้มีสุขภาพแข็งแรงครับ"
+                        msg = MailMessage(subject, sender=app.config['MAIL_USERNAME'], recipients=[patient.email], body=body)
                         mail.send(msg)
                     except Exception as e:
-                        print(f"Error sending email: {e}")
+                        print(f"Mail Error: {e}")
+
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(check_medication_reminders, 'interval', minutes=1)
 scheduler.start()
