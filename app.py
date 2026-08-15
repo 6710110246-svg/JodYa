@@ -9,6 +9,7 @@ from authlib.integrations.flask_client import OAuth
 from flask_mail import Mail, Message as MailMessage
 from apscheduler.schedulers.background import BackgroundScheduler
 
+os.environ['TZ'] = 'Asia/Bangkok'
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
@@ -201,6 +202,21 @@ def take_med(med_id):
     flash(f'บันทึกการกินยา {med.med_name} เรียบร้อย เก่งมากครับ!', 'success')
     return redirect(url_for('index'))
 
+@app.route('/test-mail')
+@login_required
+def test_mail():
+    try:
+        msg = MailMessage(
+            subject="🧪 ทดสอบระบบส่งเมล JodYa",
+            sender=app.config['MAIL_USERNAME'],
+            recipients=[current_user.email],
+            body="ถ้าคุณได้รับเมลนี้ แสดงว่าระบบส่งเมลทำงานปกติ 100% แล้วครับ!"
+        )
+        mail.send(msg)
+        return "ส่งเมลทดสอบสำเร็จ! ลองเช็กใน Inbox หรือ Spam ดูครับ"
+    except Exception as e:
+        return f"ส่งเมลไม่สำเร็จ เกิดข้อผิดพลาด: {e}"
+        
 # ==========================================
 # Background Scheduler (แจ้งเตือน ลดเม็ด, และลดวันทุกเที่ยงคืน)
 # ==========================================
