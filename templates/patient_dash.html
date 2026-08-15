@@ -16,52 +16,52 @@
     <div class="col-12 col-lg-4 mb-4">
         <div class="card shadow-sm border-0" style="border-radius: 15px;">
             <div class="card-header bg-primary text-white py-3" style="border-radius: 15px 15px 0 0;">
-                <h5 class="mb-0">➕ เพิ่มรายการยาใหม่</h5>
+                <h5 class="mb-0" data-translate="form_title">➕ เพิ่มรายการยาใหม่</h5>
             </div>
             <div class="card-body p-4">
                 <form action="{{ url_for('add_med') }}" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">ชื่อยา</label>
+                        <label class="form-label fw-bold" data-translate="med_name">ชื่อยา</label>
                         <input type="text" name="med_name" class="form-control" placeholder="เช่น พาราเซตามอล" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">รูปภาพยา (ถ้ามี)</label>
+                        <label class="form-label fw-bold" data-translate="med_image">รูปภาพยา (ถ้ามี)</label>
                         <input type="file" name="med_image" class="form-control" accept="image/*">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">ปริมาณต่อมื้อ (เช่น 1 เม็ด)</label>
+                        <label class="form-label fw-bold" data-translate="dosage_label">ปริมาณต่อมื้อ (เช่น 1 เม็ด)</label>
                         <input type="text" name="dosage" class="form-control" required>
                     </div>
                     
                     <div class="row">
                         <div class="col-6 mb-3">
-                            <label class="form-label fw-bold">จำนวนยาทั้งหมด</label>
+                            <label class="form-label fw-bold" data-translate="total_pills">จำนวนยาทั้งหมด</label>
                             <input type="number" name="total_pills" class="form-control" value="10" min="1" required>
                         </div>
                         <div class="col-6 mb-3">
-                            <label class="form-label fw-bold">จำนวนวันที่ทาน</label>
+                            <label class="form-label fw-bold" data-translate="duration">จำนวนวันที่ทาน</label>
                             <input type="number" name="duration_days" class="form-control" value="5" min="1" required>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">คำแนะนำ (เช่น หลังอาหาร)</label>
+                        <label class="form-label fw-bold" data-translate="instruction_label">คำแนะนำ (เช่น หลังอาหาร)</label>
                         <input type="text" name="instruction" class="form-control" required>
                     </div>
 
                     <!-- ส่วนเพิ่มหลายเวลา/หลายมื้อ -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold">เวลาที่ต้องทาน (เพิ่มได้หลายมื้อ)</label>
+                        <label class="form-label fw-bold" data-translate="time_label">เวลาที่ต้องทาน (เพิ่มได้หลายมื้อ)</label>
                         <div id="time-container">
                             <div class="input-group mb-2">
                                 <input type="text" name="times_to_take[]" class="form-control" placeholder="เช่น 08:00" required>
                                 <button type="button" class="btn btn-outline-danger" onclick="removeTimeField(this)" disabled>X</button>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-outline-secondary btn-sm w-100 mt-1" onclick="addTimeField()">+ เพิ่มเวลาทานยาอีกมื้อ</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100 mt-1" onclick="addTimeField()" data-translate="add_time_btn">+ เพิ่มเวลาทานยาอีกมื้อ</button>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold">บันทึกยาและตั้งแจ้งเตือน</button>
+                    <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold" data-translate="submit_btn">บันทึกยาและตั้งแจ้งเตือน</button>
                 </form>
             </div>
         </div>
@@ -69,7 +69,7 @@
 
     <!-- ฝั่งขวา: แสดงการ์ดรายการยา -->
     <div class="col-12 col-lg-8">
-        <h5 class="mb-3 fw-bold text-secondary">รายการยาที่คุณต้องทาน</h5>
+        <h5 class="mb-3 fw-bold text-secondary" data-translate="right_header">รายการยาที่คุณต้องทาน</h5>
         <div class="row">
             {% if meds %}
                 {% for med in meds %}
@@ -87,10 +87,10 @@
                             <h4 class="card-title text-primary mb-2">{{ med.med_name }}</h4>
                             <p class="card-text mb-1"><strong data-translate="dosage">จำนวนต่อมื้อ:</strong> <span class="text-dark">{{ med.dosage }}</span></p>
                             <p class="card-text mb-1"><strong data-translate="instruction">วิธีทาน:</strong> <span class="text-dark">{{ med.instruction }}</span></p>
-                            <p class="card-text mb-1"><strong data-translate="duration">คงเหลือ:</strong> <span class="text-danger fw-bold">{{ med.total_pills }} เม็ด</span> (อีก {{ med.duration_days }} วัน)</p>
+                            <p class="card-text mb-1"><strong data-translate="duration_card">คงเหลือ:</strong> <span class="text-danger fw-bold">{{ med.total_pills }} เม็ด</span> <span data-translate="duration_card2">(อีก</span> {{ med.duration_days }} <span data-translate="duration_card3">วัน)</span></p>
                             
                             <p class="card-text mb-3">
-                                <strong>เวลาทาน:</strong> 
+                                <strong><span data-translate="time_card">เวลาทาน:</span></strong> 
                                 <span class="text-danger fw-bold">
                                     {% for t in med.times %}
                                         ⏰ {{ t.time_to_take }}{% if not loop.last %}, {% endif %}
@@ -100,7 +100,7 @@
 
                             <!-- ปุ่มลบรายการยา -->
                             <div class="mt-auto">
-                                <a href="{{ url_for('delete_med', med_id=med.id) }}" class="btn btn-outline-danger btn-sm w-100 rounded-pill" onclick="return confirm('ต้องการลบรายการยานี้ใช่หรือไม่?')">🗑️ ลบรายการยานี้</a>
+                                <a href="{{ url_for('delete_med', med_id=med.id) }}" class="btn btn-outline-danger btn-sm w-100 rounded-pill" onclick="return confirm('ต้องการลบรายการยานี้ใช่หรือไม่?')" data-translate="delete_btn">🗑️ ลบรายการยานี้</a>
                             </div>
                         </div>
                     </div>
@@ -136,17 +136,71 @@
         'th': {
             'header': '📋 จัดการรายการยาของฉัน',
             'no_image': '(ไม่มีรูปภาพประกอบ)',
-            'empty': '🎉 ยังไม่มีรายการยาที่คุณบันทึกไว้ครับ'
+            'empty': '🎉 ยังไม่มีรายการยาที่คุณบันทึกไว้ครับ',
+            'form_title': '➕ เพิ่มรายการยาใหม่',
+            'med_name': 'ชื่อยา',
+            'med_image': 'รูปภาพยา (ถ้ามี)',
+            'dosage_label': 'ปริมาณต่อมื้อ (เช่น 1 เม็ด)',
+            'total_pills': 'จำนวนยาทั้งหมด',
+            'duration': 'จำนวนวันที่ทาน',
+            'instruction_label': 'คำแนะนำ (เช่น หลังอาหาร)',
+            'time_label': 'เวลาที่ต้องทาน (เพิ่มได้หลายมื้อ)',
+            'add_time_btn': '+ เพิ่มเวลาทานยาอีกมื้อ',
+            'submit_btn': 'บันทึกยาและตั้งแจ้งเตือน',
+            'right_header': 'รายการยาที่คุณต้องทาน',
+            'dosage': 'จำนวนต่อมื้อ:',
+            'instruction': 'วิธีทาน:',
+            'duration_card': 'คงเหลือ:',
+            'duration_card2': '(อีก ',
+            'duration_card3': ' วัน)',
+            'time_card': 'เวลาทาน:',
+            'delete_btn': '🗑️ ลบรายการยานี้'
         },
         'rumi': {
             'header': '📋 Urus Senarai Ubat Saya',
             'no_image': '(Tiada gambar)',
-            'empty': '🎉 Tiada ubat yang direkodkan'
+            'empty': '🎉 Tiada ubat yang direkodkan',
+            'form_title': '➕ Tambah Ubat Baru',
+            'med_name': 'Nama Ubat',
+            'med_image': 'Gambar Ubat (jika ada)',
+            'dosage_label': 'Dos (cth: 1 biji)',
+            'total_pills': 'Jumlah Ubat',
+            'duration': 'Bilangan Hari',
+            'instruction_label': 'Arahan (cth: selepas makan)',
+            'time_label': 'Masa (boleh tambah)',
+            'add_time_btn': '+ Tambah Masa Ubat',
+            'submit_btn': 'Simpan & Tetapkan Penggera',
+            'right_header': 'Senarai Ubat Anda',
+            'dosage': 'Dos:',
+            'instruction': 'Arahan:',
+            'duration_card': 'Baki:',
+            'duration_card2': '(lagi ',
+            'duration_card3': ' hari)',
+            'time_card': 'Masa:',
+            'delete_btn': '🗑️ Padam Ubat Ini'
         },
         'jawi': {
             'header': '📋 اوروس سناراي اوبت ساي',
             'no_image': '(تياد ݢمبر)',
-            'empty': '🎉 تياد اوبت يڠ دريكودکن'
+            'empty': '🎉 تياد اوبت يڠ دريكودکن',
+            'form_title': '➕ تمبه اوبت بارو',
+            'med_name': 'نام اوبت',
+            'med_image': 'ݢمبر اوبت (جک ادا)',
+            'dosage_label': 'دوس (چونتوه: 1 بيجي)',
+            'total_pills': 'جومله اوبت',
+            'duration': 'بيلڠن هاري',
+            'instruction_label': 'ارهن (چونتوه: سلڤس ماکن)',
+            'time_label': 'ماس (بوليه تمبه)',
+            'add_time_btn': '+ تمبه ماس اوبت',
+            'submit_btn': 'سيمڤن & تتڤکن ڤڠݢيرا',
+            'right_header': 'سناراي اوبت اندا',
+            'dosage': 'دوس:',
+            'instruction': 'ارهن:',
+            'duration_card': 'باکي:',
+            'duration_card2': '(لاݢي ',
+            'duration_card3': ' هاري)',
+            'time_card': 'ماس:',
+            'delete_btn': '🗑️ ڤادم اوبت اين'
         }
     };
 

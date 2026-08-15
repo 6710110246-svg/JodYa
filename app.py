@@ -216,7 +216,7 @@ def test_mail():
         return "ส่งเมลทดสอบสำเร็จ! ลองเช็กใน Inbox หรือ Spam ดูครับ"
     except Exception as e:
         return f"ส่งเมลไม่สำเร็จ เกิดข้อผิดพลาด: {e}"
-        
+
 # ==========================================
 # Background Scheduler (แจ้งเตือน ลดเม็ด, และลดวันทุกเที่ยงคืน)
 # ==========================================
@@ -224,12 +224,14 @@ last_day_checked = None
 
 def check_medication_reminders():
     global last_day_checked
+    import re  # นำเข้าโมดูลสำหรับดึงตัวเลขจากข้อความ (ใช้แปลงคำว่า "1 เม็ด" ให้เป็นเลข 1)
+    
     with app.app_context():
         now = datetime.now()
         current_time_str = now.strftime("%H:%M")
         today = now.date()
 
-        # ตรวจสอบการลดจำนวนวันเมื่อขึ้นวันใหม่ (เที่ยงคืน)
+        # 1. ระบบลดจำนวนวันลง 1 วัน เมื่อผ่านพ้นเที่ยงคืน (ขึ้นวันใหม่)
         if last_day_checked != today:
             all_meds = Medication.query.all()
             for m in all_meds:
@@ -238,33 +240,53 @@ def check_medication_reminders():
             db.session.commit()
             last_day_checked = today
 
-        # ตรวจสอบเวลาแจ้งเตือนในแต่ละมื้อ
+        # 2. ตรวจสอบเวลาแจ้งเตือนเพื่อส่งเมลและหักจำนวนยา
         med_times = MedicationTime.query.all()
         for mt in med_times:
             med = Medication.query.get(mt.medication_id)
             if not med:
                 continue
             
-            # ถ้าหมดยาหรือหมดวันแล้ว ข้าม
+            # ลูปจะหยุดทำงานทันที ถ้ายาหมด (0 เม็ด) หรือจำนวนวันหมด
             if med.total_pills <= 0 or med.duration_days < 0:
                 continue
 
-            if mt.time_to_take == current_time_str:
+            # จัด Format เวลาให้อยู่ในรูปแบบ HH:MM เสมอ
+            db_time = mt.time_to_take.strip()
+            try:
+                parsed_time = datetime.strptime(db_time, "%H:%M").strftime("%H:%M")
+            except ValueError:
+                parsed_time = db_time
+
+            # 3. เมื่อเวลาปัจจุบัน ตรงกับ เวลาที่ตั้งไว้
+            if parsed_time == current_time_str:
                 patient = User.query.get(med.patient_id)
                 if patient and patient.email:
-                    # หักจำนวนยาทั้งหมดลง (หรือหักตามปริมาณต่อมื้อ)
+                    
+                    # ค้นหาตัวเลขจากช่อง "ปริมาณต่อมื้อ" (เช่น พิมพ์ "1 เม็ด" หรือ "1" ระบบจะดึงเลข 1 มาใช้)
+                    deduct_amount = 1
+                    match = re.search(r'\d+', str(med.dosage))
+                    if match:
+                        deduct_amount = int(match.group())
+
+                    # ทำการลบจำนวนยาออกตามที่ทานไป
                     if med.total_pills > 0:
-                        med.total_pills -= 1
+                        med.total_pills -= deduct_amount
+                        # ป้องกันกรณียาติดลบ (เช่น ยาเหลือ 1 แต่ต้องกิน 2)
+                        if med.total_pills < 0:
+                            med.total_pills = 0 
                         db.session.commit()
 
+                    # ส่งอีเมลแจ้งเตือน พร้อมรายงานสถานะยาคงเหลือล่าสุด
                     subject = f"💊 ถึงเวลากินยาแล้ว: {med.med_name}"
-                    body = f"สวัสดีคุณ {patient.name}, ถึงเวลากินยา '{med.med_name}' จำนวน {med.dosage} ({med.instruction}) แล้วนะครับ ยาคงเหลือ {med.total_pills} เม็ด"
+                    body = f"สวัสดีคุณ {patient.name},\n\nถึงเวลากินยา '{med.med_name}' จำนวน {med.dosage} ({med.instruction}) แล้วนะครับ\n\nสถานะยาปัจจุบัน:\n- ยาคงเหลือ: {med.total_pills} เม็ด\n- ทานต่อเนื่องอีก: {med.duration_days} วัน\n\nอย่าลืมทานยานะครับ!"
+                    
                     try:
                         msg = MailMessage(subject, sender=app.config['MAIL_USERNAME'], recipients=[patient.email], body=body)
                         mail.send(msg)
+                        print(f"Email sent successfully. Remaining pills: {med.total_pills}")
                     except Exception as e:
                         print(f"Mail Error: {e}")
-
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(check_medication_reminders, 'interval', minutes=1)
 scheduler.start()
