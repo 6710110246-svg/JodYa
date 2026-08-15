@@ -1,18 +1,22 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-5 text-center mt-5">
-        <div class="card shadow">
-            <div class="card-body py-5">
-                <h2 class="mb-4">เข้าสู่ระบบ JodYa</h2>
-                <p class="text-muted mb-4">กรุณาเลือกสถานะของคุณเพื่อเข้าใช้งาน</p>
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <!-- มือถือใช้เต็ม 12 ส่วน, แท็บเล็ต 8 ส่วน, คอม 5 ส่วน -->
+    <div class="col-12 col-md-8 col-lg-5">
+        <div class="card shadow border-0" style="border-radius: 20px;">
+            <div class="card-body p-4 p-md-5 text-center">
+                <h2 class="fw-bold text-primary mb-3">ยินดีต้อนรับสู่ JodYa</h2>
+                <p class="text-muted mb-4">ระบบจัดการและแจ้งเตือนการทานยา</p>
                 
                 <div class="d-grid gap-3">
-                    <a href="{{ url_for('login_role', role='patient') }}" class="btn btn-outline-success btn-lg">
-                        👨‍🦽 เข้าสู่ระบบสำหรับ <b>ผู้ป่วย</b> (Patient)
+                    <a href="{{ url_for('login_role', role='patient') }}" class="btn btn-primary btn-lg rounded-pill py-3 fw-bold shadow-sm" style="line-height: 1.4;">
+                        🧑‍🦽 เข้าสู่ระบบสำหรับ ผู้ป่วย<br>
+                        <small class="fw-normal" style="font-size: 0.8rem; opacity: 0.9;">Log masuk Pesakit | لوݢ ماسوق ڤساكيت</small>
                     </a>
-                    <a href="{{ url_for('login_role', role='doctor') }}" class="btn btn-outline-primary btn-lg">
-                        👨‍⚕️ เข้าสู่ระบบสำหรับ <b>แพทย์</b> (Doctor)
+                    
+                    <a href="{{ url_for('login_role', role='doctor') }}" class="btn btn-outline-primary btn-lg rounded-pill py-3 fw-bold" style="line-height: 1.4;">
+                        👨‍⚕️ เข้าสู่ระบบสำหรับ แพทย์<br>
+                        <small class="fw-normal" style="font-size: 0.8rem; opacity: 0.9;">Log masuk Doktor | لوݢ ماسوق دوكتور</small>
                     </a>
                 </div>
             </div>

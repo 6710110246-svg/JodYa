@@ -1,83 +1,87 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="row">
-    <!-- ฟอร์มสั่งยา -->
-    <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">📝 สั่งจ่ายยาใหม่</div>
-            <div class="card-body">
-                <!-- สำคัญ: ต้องมี enctype="multipart/form-data" ระบบถึงจะยอมให้ส่งไฟล์รูปภาพได้ -->
+    <!-- ฟอร์มสั่งยา: มือถือใช้เต็ม 12 ส่วน, คอมใช้ 4 ส่วน -->
+    <div class="col-12 col-lg-4 mb-4">
+        <div class="card shadow-sm border-0" style="border-radius: 15px;">
+            <div class="card-header bg-primary text-white py-3" style="border-radius: 15px 15px 0 0;">
+                <h5 class="mb-0">📝 สั่งจ่ายยาใหม่</h5>
+            </div>
+            <div class="card-body p-4">
                 <form action="{{ url_for('assign_med') }}" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
-                        <label>เลือกคนไข้</label>
-                        <select name="patient_id" class="form-control" required>
+                        <label class="form-label fw-bold">เลือกคนไข้</label>
+                        <select name="patient_id" class="form-select" required>
                             <option value="" disabled selected>-- เลือกคนไข้ --</option>
                             {% for p in patients %}
-                                <option value="{{ p.id }}">{{ p.name }} ({{ p.email }})</option>
+                                <option value="{{ p.id }}">{{ p.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label>ชื่อยา</label>
+                        <label class="form-label fw-bold">ชื่อยา</label>
                         <input type="text" name="med_name" class="form-control" required>
                     </div>
-                    <!-- ช่องสำหรับอัปโหลดรูปภาพยา -->
                     <div class="mb-3">
-                        <label>รูปภาพยา (ไม่บังคับ)</label>
+                        <label class="form-label fw-bold">รูปภาพยา (ไม่บังคับ)</label>
                         <input type="file" name="med_image" class="form-control" accept="image/*">
                     </div>
                     <div class="mb-3">
-                        <label>ปริมาณ (เช่น 1 เม็ด)</label>
+                        <label class="form-label fw-bold">ปริมาณ (เช่น 1 เม็ด)</label>
                         <input type="text" name="dosage" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label>คำแนะนำ (เช่น หลังอาหาร)</label>
+                        <label class="form-label fw-bold">คำแนะนำ (เช่น หลังอาหาร)</label>
                         <input type="text" name="instruction" class="form-control" required>
                     </div>
-                    <div class="mb-3">
-                        <label>เวลาที่ต้องทาน (HH:MM)</label>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">เวลาที่ต้องทาน (HH:MM)</label>
                         <input type="time" name="time_to_take" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">บันทึกและแจ้งเตือนคนไข้</button>
+                    <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold">บันทึกและแจ้งเตือน</button>
                 </form>
             </div>
         </div>
     </div>
     
-    <!-- ประวัติการสั่งยา -->
-    <div class="col-md-8">
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">ประวัติการสั่งยาของคนไข้ในความดูแล</div>
-            <div class="card-body">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>รูปยา</th>
-                            <th>ชื่อยา</th>
-                            <th>คนไข้</th>
-                            <th>ปริมาณ</th>
-                            <th>เวลาเตือน</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for med in meds %}
-                        <tr>
-                            <!-- คอลัมน์แสดงรูปภาพยา -->
-                            <td>
-                                {% if med.image_file %}
-                                    <img src="{{ url_for('static', filename='uploads/' + med.image_file) }}" alt="Med Image" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
-                                {% else %}
-                                    <span class="text-muted" style="font-size: 0.8em;">ไม่มีรูป</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ med.med_name }}</td>
-                            <td>{{ med.patient.name }}</td> <!-- ดึงชื่อคนไข้มาแสดงแทน ID -->
-                            <td>{{ med.dosage }} ({{ med.instruction }})</td>
-                            <td>{{ med.time_to_take }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- ประวัติการสั่งยา: มือถือใช้เต็ม 12 ส่วน, คอมใช้ 8 ส่วน -->
+    <div class="col-12 col-lg-8">
+        <div class="card shadow-sm border-0" style="border-radius: 15px;">
+            <div class="card-header bg-dark text-white py-3" style="border-radius: 15px 15px 0 0;">
+                <h5 class="mb-0">ประวัติการสั่งยาของคนไข้</h5>
+            </div>
+            <div class="card-body p-0">
+                <!-- ใส่ table-responsive ให้เลื่อนซ้ายขวาในมือถือได้ -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="min-width: 600px;">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="px-3">รูปยา</th>
+                                <th>ชื่อยา</th>
+                                <th>คนไข้</th>
+                                <th>ปริมาณ</th>
+                                <th class="px-3">เวลาเตือน</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for med in meds %}
+                            <tr>
+                                <td class="px-3">
+                                    {% if med.image_file %}
+                                        <img src="{{ url_for('static', filename='uploads/' + med.image_file) }}" alt="Med" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                                    {% else %}
+                                        <span class="badge bg-secondary">ไม่มีรูป</span>
+                                    {% endif %}
+                                </td>
+                                <td class="fw-bold text-primary">{{ med.med_name }}</td>
+                                <td>{{ med.patient.name }}</td>
+                                <td>{{ med.dosage }} <br><small class="text-muted">{{ med.instruction }}</small></td>
+                                <td class="px-3 text-danger fw-bold">⏰ {{ med.time_to_take }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
