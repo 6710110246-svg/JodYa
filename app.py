@@ -9,7 +9,6 @@ from authlib.integrations.flask_client import OAuth
 from flask_mail import Mail, Message as MailMessage
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# ตั้งค่าให้ OAuth ยอมรับ HTTP (สำหรับ dev/IP)
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
@@ -20,9 +19,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# ==========================================
-# ตั้งค่า Email & Google OAuth
-# ==========================================
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -52,7 +48,7 @@ login_manager.login_view = 'login'
 login_manager.init_app(app)
 
 # ==========================================
-# Database Models (ตัด role และ doctor ออก)
+# Database Models
 # ==========================================
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -66,13 +62,18 @@ class Medication(db.Model):
     med_name = db.Column(db.String(100), nullable=False)
     dosage = db.Column(db.String(50)) 
     instruction = db.Column(db.String(100)) 
-    time_to_take = db.Column(db.String(10)) 
     image_file = db.Column(db.String(255), nullable=True)
     total_pills = db.Column(db.Integer, default=10)
     duration_days = db.Column(db.Integer, default=5)
     start_date = db.Column(db.Date, default=date.today)
     
     patient = db.relationship('User', foreign_keys=[patient_id])
+    times = db.relationship('MedicationTime', backref='medication', cascade='all, delete-orphan')
+
+class MedicationTime(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    medication_id = db.Column(db.Integer, db.ForeignKey('medication.id'), nullable=False)
+    time_to_take = db.Column(db.String(10), nullable=False)
 
 class MedLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -90,7 +91,6 @@ def load_user(user_id):
 @app.route('/')
 @login_required
 def index():
-    # โหลดเฉพาะยาของคนที่ล็อกอินอยู่เข้ามาแสดง
     meds = Medication.query.filter_by(patient_id=current_user.id).all()
     today = datetime.now().date()
     logs = {log.med_id: log.status for log in MedLog.query.filter_by(date_logged=today).all()}
@@ -101,7 +101,7 @@ def login():
     return render_template('login.html')
 
 @app.route('/login/<role>')
-def login_role(role):
+def login_role(role='patient'):
     session['temp_role'] = role
     return google.authorize_redirect(url_for('authorize', _external=True), prompt='select_account')
 
@@ -125,34 +125,32 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# ==========================================
-# จัดการเพิ่มยา (คนไข้เพิ่มเอง)
-# ==========================================
 @app.route('/add_med', methods=['POST'])
 @login_required
 def add_med():
     med_name = request.form.get('med_name')
     dosage = request.form.get('dosage')
     instruction = request.form.get('instruction')
-    time_to_take = request.form.get('time_to_take')
     total_pills = int(request.form.get('total_pills', 10))
     duration_days = int(request.form.get('duration_days', 5))
+    
+    # รับค่าเวลาหลายๆ เวลาที่ส่งมาจากฟอร์ม
+    times_list = request.form.getlist('times_to_take[]')
     
     image_file = None
     if 'med_image' in request.files:
         file = request.files['med_image']
-        if file.filename != '':
+        if file and file.filename != '':
             filename = secure_filename(file.filename)
             filename = f"{int(datetime.utcnow().timestamp())}_{filename}"
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             image_file = filename
             
     new_med = Medication(
-        patient_id=current_user.id, # บันทึกเข้าไอดีคนไข้ที่กำลังล็อกอิน
+        patient_id=current_user.id,
         med_name=med_name,
         dosage=dosage,
         instruction=instruction,
-        time_to_take=time_to_take,
         total_pills=total_pills,
         duration_days=duration_days,
         start_date=date.today(),
@@ -161,7 +159,26 @@ def add_med():
     
     db.session.add(new_med)
     db.session.commit()
+
+    # บันทึกเวลาทั้งหมดลงตารางย่อย
+    for t in times_list:
+        if t.strip():
+            med_time = MedicationTime(medication_id=new_med.id, time_to_take=t.strip())
+            db.session.add(med_time)
+    db.session.commit()
+
     flash('บันทึกรายการยาและตั้งเวลาแจ้งเตือนเรียบร้อย!', 'success')
+    return redirect(url_for('index'))
+
+@app.route('/delete_med/<int:med_id>')
+@login_required
+def delete_med(med_id):
+    med = Medication.query.get_or_404(med_id)
+    if med.patient_id != current_user.id:
+        abort(403)
+    db.session.delete(med)
+    db.session.commit()
+    flash('ลบรายการยาเรียบร้อยแล้ว', 'success')
     return redirect(url_for('index'))
 
 @app.route('/take_med/<int:med_id>')
@@ -185,25 +202,47 @@ def take_med(med_id):
     return redirect(url_for('index'))
 
 # ==========================================
-# Background Scheduler (แจ้งเตือนอีเมล 5 วันอัตโนมัติ)
+# Background Scheduler (แจ้งเตือน ลดเม็ด, และลดวันทุกเที่ยงคืน)
 # ==========================================
+last_day_checked = None
+
 def check_medication_reminders():
+    global last_day_checked
     with app.app_context():
         now = datetime.now()
         current_time_str = now.strftime("%H:%M")
         today = now.date()
 
-        meds = Medication.query.all()
-        for med in meds:
-            end_date = med.start_date + timedelta(days=med.duration_days)
-            if not (med.start_date <= today <= end_date):
-                continue # หมดกำหนดวันแล้วหยุดส่งเมล
+        # ตรวจสอบการลดจำนวนวันเมื่อขึ้นวันใหม่ (เที่ยงคืน)
+        if last_day_checked != today:
+            all_meds = Medication.query.all()
+            for m in all_meds:
+                if m.duration_days > 0:
+                    m.duration_days -= 1
+            db.session.commit()
+            last_day_checked = today
 
-            if med.time_to_take == current_time_str:
+        # ตรวจสอบเวลาแจ้งเตือนในแต่ละมื้อ
+        med_times = MedicationTime.query.all()
+        for mt in med_times:
+            med = Medication.query.get(mt.medication_id)
+            if not med:
+                continue
+            
+            # ถ้าหมดยาหรือหมดวันแล้ว ข้าม
+            if med.total_pills <= 0 or med.duration_days < 0:
+                continue
+
+            if mt.time_to_take == current_time_str:
                 patient = User.query.get(med.patient_id)
                 if patient and patient.email:
+                    # หักจำนวนยาทั้งหมดลง (หรือหักตามปริมาณต่อมื้อ)
+                    if med.total_pills > 0:
+                        med.total_pills -= 1
+                        db.session.commit()
+
                     subject = f"💊 ถึงเวลากินยาแล้ว: {med.med_name}"
-                    body = f"สวัสดีคุณ {patient.name}, ถึงเวลากินยา '{med.med_name}' จำนวน {med.dosage} ({med.instruction}) แล้วนะครับ"
+                    body = f"สวัสดีคุณ {patient.name}, ถึงเวลากินยา '{med.med_name}' จำนวน {med.dosage} ({med.instruction}) แล้วนะครับ ยาคงเหลือ {med.total_pills} เม็ด"
                     try:
                         msg = MailMessage(subject, sender=app.config['MAIL_USERNAME'], recipients=[patient.email], body=body)
                         mail.send(msg)

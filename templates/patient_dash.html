@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<!-- แถบเลือกภาษา (ขวาบน) -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0 fw-bold text-primary" data-translate="header">📋 จัดการรายการยาของฉัน</h4>
     <div class="d-flex gap-2">
@@ -13,7 +12,7 @@
 <hr>
 
 <div class="row">
-    <!-- ฝั่งซ้าย: ฟอร์มให้คนไข้เพิ่มยาเอง -->
+    <!-- ฝั่งซ้าย: ฟอร์มเพิ่มยา รองรับหลายมื้อ -->
     <div class="col-12 col-lg-4 mb-4">
         <div class="card shadow-sm border-0" style="border-radius: 15px;">
             <div class="card-header bg-primary text-white py-3" style="border-radius: 15px 15px 0 0;">
@@ -49,10 +48,19 @@
                         <label class="form-label fw-bold">คำแนะนำ (เช่น หลังอาหาร)</label>
                         <input type="text" name="instruction" class="form-control" required>
                     </div>
+
+                    <!-- ส่วนเพิ่มหลายเวลา/หลายมื้อ -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold">เวลาที่ต้องทาน (HH:MM)</label>
-                        <input type="time" name="time_to_take" class="form-control" required>
+                        <label class="form-label fw-bold">เวลาที่ต้องทาน (เพิ่มได้หลายมื้อ)</label>
+                        <div id="time-container">
+                            <div class="input-group mb-2">
+                                <input type="text" name="times_to_take[]" class="form-control" placeholder="เช่น 08:00" required>
+                                <button type="button" class="btn btn-outline-danger" onclick="removeTimeField(this)" disabled>X</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100 mt-1" onclick="addTimeField()">+ เพิ่มเวลาทานยาอีกมื้อ</button>
                     </div>
+
                     <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold">บันทึกยาและตั้งแจ้งเตือน</button>
                 </form>
             </div>
@@ -76,11 +84,24 @@
                         {% endif %}
                         
                         <div class="card-body d-flex flex-column">
-                            <h4 class="card-title text-primary mb-3">{{ med.med_name }}</h4>
-                            <p class="card-text mb-2"><strong data-translate="dosage">จำนวน:</strong> <span class="text-dark">{{ med.dosage }}</span></p>
-                            <p class="card-text mb-2"><strong data-translate="instruction">วิธีทาน:</strong> <span class="text-dark">{{ med.instruction }}</span></p>
-                            <p class="card-text mb-2"><strong data-translate="duration">ระยะเวลา:</strong> <span class="text-dark">ทั้งหมด {{ med.total_pills }} เม็ด ({{ med.duration_days }} วัน)</span></p>
-                            <p class="card-text mb-3"><strong data-translate="time">เวลาเตือน:</strong> <span class="text-danger fw-bold">⏰ {{ med.time_to_take }}</span></p>
+                            <h4 class="card-title text-primary mb-2">{{ med.med_name }}</h4>
+                            <p class="card-text mb-1"><strong data-translate="dosage">จำนวนต่อมื้อ:</strong> <span class="text-dark">{{ med.dosage }}</span></p>
+                            <p class="card-text mb-1"><strong data-translate="instruction">วิธีทาน:</strong> <span class="text-dark">{{ med.instruction }}</span></p>
+                            <p class="card-text mb-1"><strong data-translate="duration">คงเหลือ:</strong> <span class="text-danger fw-bold">{{ med.total_pills }} เม็ด</span> (อีก {{ med.duration_days }} วัน)</p>
+                            
+                            <p class="card-text mb-3">
+                                <strong>เวลาทาน:</strong> 
+                                <span class="text-danger fw-bold">
+                                    {% for t in med.times %}
+                                        ⏰ {{ t.time_to_take }}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                </span>
+                            </p>
+
+                            <!-- ปุ่มลบรายการยา -->
+                            <div class="mt-auto">
+                                <a href="{{ url_for('delete_med', med_id=med.id) }}" class="btn btn-outline-danger btn-sm w-100 rounded-pill" onclick="return confirm('ต้องการลบรายการยานี้ใช่หรือไม่?')">🗑️ ลบรายการยานี้</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -94,33 +115,37 @@
     </div>
 </div>
 
-<!-- Script แปลภาษา -->
+<!-- Script เพิ่มช่องเวลาแบบไดนามิก และระบบแปลภาษา -->
 <script>
+    function addTimeField() {
+        const container = document.getElementById('time-container');
+        const div = document.createElement('div');
+        div.className = 'input-group mb-2';
+        div.innerHTML = `
+            <input type="text" name="times_to_take[]" class="form-control" placeholder="เช่น 12:00" required>
+            <button type="button" class="btn btn-outline-danger" onclick="removeTimeField(this)">X</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function removeTimeField(button) {
+        button.parentElement.remove();
+    }
+
     const translations = {
         'th': {
             'header': '📋 จัดการรายการยาของฉัน',
             'no_image': '(ไม่มีรูปภาพประกอบ)',
-            'dosage': 'จำนวน:',
-            'instruction': 'วิธีทาน:',
-            'duration': 'ระยะเวลา:',
-            'time': 'เวลาเตือน:',
             'empty': '🎉 ยังไม่มีรายการยาที่คุณบันทึกไว้ครับ'
         },
         'rumi': {
             'header': '📋 Urus Senarai Ubat Saya',
             'no_image': '(Tiada gambar)',
-            'dosage': 'Kuantiti:',
-            'instruction': 'Cara makan:',
-            'tempoh': 'Tempoh:',
-            'time': 'Masa:',
             'empty': '🎉 Tiada ubat yang direkodkan'
         },
         'jawi': {
             'header': '📋 اوروس سناراي اوبت ساي',
             'no_image': '(تياد ݢمبر)',
-            'dosage': 'کوانتيتي:',
-            'instruction': 'چارا ماکن:',
-            'time': 'ماس:',
             'empty': '🎉 تياد اوبت يڠ دريكودکن'
         }
     };
@@ -140,4 +165,4 @@
         setLanguage(savedLang);
     });
 </script>
-{% endblock %}
+{% endbackground %}
