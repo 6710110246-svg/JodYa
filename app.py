@@ -1,4 +1,5 @@
 import os
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
@@ -14,6 +15,7 @@ from functools import wraps
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config['SECRET_KEY'] = 'super-secret-jodya-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///jodya.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
