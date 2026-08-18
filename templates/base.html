@@ -21,6 +21,9 @@
                         <li class="nav-item me-lg-3 mb-2 mb-lg-0 text-white text-lg-center">
                             <span>สวัสดี, {{ current_user.name }}</span>
                         </li>
+                        <li class="nav-item me-lg-2 mb-2 mb-lg-0">
+                            <a class="btn btn-outline-light btn-sm w-100 rounded-pill" href="{{ url_for('manual') }}">📖 คู่มือการใช้งาน</a>
+                        </li>
                         <li class="nav-item">
                             <a class="btn btn-danger btn-sm w-100 rounded-pill" href="{{ url_for('logout') }}">ออกจากระบบ</a>
                         </li>

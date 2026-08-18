@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center mb-5">
+    <div class="col-12 col-lg-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0 fw-bold text-primary">📖 คู่มือการใช้งาน JodYa</h4>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-4">🔙 กลับไปหน้าจัดการยา</a>
+        </div>
+        
+        <div class="card shadow-sm border-0" style="border-radius: 15px;">
+            <div class="card-body p-4 p-md-5">
+                
+                <h5 class="fw-bold text-primary mb-3">🚀 1. การเริ่มต้นใช้งาน (Getting Started)</h5>
+                <ul class="text-muted mb-4">
+                    <li>เข้าสู่เว็บไซต์ JodYa</li>
+                    <li>คลิกปุ่ม <strong>"เข้าสู่ระบบด้วย Google"</strong> เพื่อความสะดวกรวดเร็ว โดยไม่ต้องจำรหัสผ่าน</li>
+                    <li>เมื่อเข้าสู่ระบบสำเร็จ จะพบกับหน้า <strong>Dashboard</strong> สำหรับจัดการรายการยาของคุณ</li>
+                </ul>
+
+                <h5 class="fw-bold text-primary mb-3">➕ 2. การเพิ่มรายการยาใหม่ (Add Medication)</h5>
+                <p class="text-muted mb-2">ที่กล่อง "เพิ่มรายการยาใหม่" คุณสามารถตั้งค่าตารางยาได้ดังนี้:</p>
+                <ul class="text-muted mb-4">
+                    <li><strong>ชื่อยา:</strong> ระบุชื่อยาที่แพทย์สั่ง (เช่น พาราเซตามอล)</li>
+                    <li><strong>รูปภาพยา:</strong> อัปโหลดรูปภาพเม็ดยาเพื่อป้องกันความสับสน</li>
+                    <li><strong>ปริมาณ / จำนวนวัน:</strong> ระบุว่าทานมื้อละกี่เม็ด, ยามีทั้งหมดกี่เม็ด และต้องทานกี่วัน</li>
+                    <li><strong>เวลาที่ต้องทาน:</strong> สามารถกดปุ่ม <code>+ เพิ่มเวลาทานยาอีกมื้อ</code> เพื่อตั้งเวลาให้ครบทุกมื้อใน 1 วัน</li>
+                </ul>
+
+                <h5 class="fw-bold text-primary mb-3">📝 3. การบันทึกอาการหลังกินยา (Feeling Log)</h5>
+                <ul class="text-muted mb-4">
+                    <li>เมื่อถึงเวลาทานยา ให้ไปที่การ์ดรายการยานั้นๆ แล้วกดปุ่ม <strong>"✅ บันทึกการกินยา"</strong></li>
+                    <li>ระบบจะแสดงหน้าต่าง (Pop-up) ให้เลือกบันทึกความรู้สึกของคุณหลังทานยา</li>
+                    <li>หากมีอาการผิดปกติ สามารถพิมพ์อธิบายเพิ่มในช่อง <strong>"บันทึกเพิ่มเติม"</strong> ได้</li>
+                </ul>
+
+                <h5 class="fw-bold text-primary mb-3">⏰ 4. ระบบแจ้งเตือนและการจัดการ (Notifications & Manage)</h5>
+                <ul class="text-muted mb-0">
+                    <li>เมื่อถึงเวลาที่กำหนด ระบบจะส่งข้อความแจ้งเตือนไปยังระบบทันที</li>
+                    <li>ระบบจะทำการ <strong>หักลบจำนวนเม็ดยา</strong> ที่เหลืออยู่ให้โดยอัตโนมัติ</li>
+                    <li>คุณสามารถลบรายการยาได้ทุกเมื่อ หากกรอกผิดพลาดหรือหยุดทานยาแล้ว</li>
+                </ul>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

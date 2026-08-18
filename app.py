@@ -81,7 +81,8 @@ class MedLog(db.Model):
     med_id = db.Column(db.Integer, db.ForeignKey('medication.id'))
     date_logged = db.Column(db.Date, default=datetime.utcnow().date)
     status = db.Column(db.String(20), default='pending') 
-
+    feeling = db.Column(db.String(50), nullable=True)  # เพิ่ม: สำหรับเก็บ Emoji อาการ
+    note = db.Column(db.Text, nullable=True)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -125,6 +126,11 @@ def authorize():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/manual')
+@login_required
+def manual():
+    return render_template('manual.html')
 
 @app.route('/add_med', methods=['POST'])
 @login_required
@@ -182,24 +188,36 @@ def delete_med(med_id):
     flash('ลบรายการยาเรียบร้อยแล้ว', 'success')
     return redirect(url_for('index'))
 
-@app.route('/take_med/<int:med_id>')
+@app.route('/take_med/<int:med_id>', methods=['GET', 'POST'])
 @login_required
 def take_med(med_id):
     med = Medication.query.get_or_404(med_id)
     if med.patient_id != current_user.id:
         abort(403)
         
-    today = datetime.now().date()
+    today = datetime.now(THAILAND_TZ).date()
     log = MedLog.query.filter_by(med_id=med.id, date_logged=today).first()
     
+    feeling = None
+    note = None
+    
+    # ถ้ารับข้อมูลมาจากหน้าต่าง Pop-up
+    if request.method == 'POST':
+        feeling = request.form.get('feeling')
+        note = request.form.get('note')
+
+    # บันทึกข้อมูลลงฐานข้อมูล
     if not log:
-        log = MedLog(med_id=med.id, date_logged=today, status='taken')
+        log = MedLog(med_id=med.id, date_logged=today, status='taken', feeling=feeling, note=note)
         db.session.add(log)
     else:
         log.status = 'taken'
-        
+        if request.method == 'POST':
+            log.feeling = feeling
+            log.note = note
+            
     db.session.commit()
-    flash(f'บันทึกการกินยา {med.med_name} เรียบร้อย เก่งมากครับ!', 'success')
+    flash(f'บันทึกการกินยา {med.med_name} และอาการเรียบร้อยครับ!', 'success')
     return redirect(url_for('index'))
 
 @app.route('/test-mail')

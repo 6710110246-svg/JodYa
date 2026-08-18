@@ -98,13 +98,68 @@
                                 </span>
                             </p>
 
-                            <!-- ปุ่มลบรายการยา -->
+                            <!-- จัดกลุ่มปุ่มด้านล่างการ์ด -->
                             <div class="mt-auto">
+                                <!-- ปุ่มเรียก Pop-up บันทึกอาการ -->
+                                <button type="button" class="btn btn-success btn-sm w-100 rounded-pill mb-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#feelingModal{{ med.id }}">
+                                    ✅ บันทึกการกินยา
+                                </button>
+
                                 <a href="{{ url_for('delete_med', med_id=med.id) }}" class="btn btn-outline-danger btn-sm w-100 rounded-pill" onclick="return confirm('ต้องการลบรายการยานี้ใช่หรือไม่?')" data-translate="delete_btn">🗑️ ลบรายการยานี้</a>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- โครงสร้าง Pop-up (Modal) ถามอาการหลังกินยา (ซ่อนอยู่และจะถูกเรียกเมื่อกดปุ่มด้านบน) -->
+                <div class="modal fade" id="feelingModal{{ med.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content" style="border-radius: 20px; background-color: #f8f9fa;">
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title fw-bold text-dark mx-auto mt-3">วันนี้รู้สึกยังไงบ้างหลังกินยา?</h5>
+                            </div>
+                            <form action="{{ url_for('take_med', med_id=med.id) }}" method="POST">
+                                <div class="modal-body text-center px-4">
+                                    
+                                    <!-- กลุ่มปุ่ม Emoji -->
+                                    <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                                        <input type="radio" class="btn-check" name="feeling" id="feel_good{{ med.id }}" value="รู้สึกดี">
+                                        <label class="btn btn-outline-primary rounded-pill bg-white shadow-sm" for="feel_good{{ med.id }}">😍 รู้สึกดี</label>
+                      
+                                        <input type="radio" class="btn-check" name="feeling" id="feel_normal{{ med.id }}" value="ปกติ">
+                                        <label class="btn btn-outline-secondary rounded-pill bg-white shadow-sm" for="feel_normal{{ med.id }}">😐 ปกติ</label>
+                      
+                                        <input type="radio" class="btn-check" name="feeling" id="feel_bad{{ med.id }}" value="ไม่สบายตัว">
+                                        <label class="btn btn-outline-warning rounded-pill bg-white shadow-sm" for="feel_bad{{ med.id }}">🤒 ไม่สบายตัว</label>
+                      
+                                        <input type="radio" class="btn-check" name="feeling" id="feel_nausea{{ med.id }}" value="คลื่นไส้">
+                                        <label class="btn btn-outline-success rounded-pill bg-white shadow-sm" for="feel_nausea{{ med.id }}">🤢 คลื่นไส้</label>
+                      
+                                        <input type="radio" class="btn-check" name="feeling" id="feel_dizzy{{ med.id }}" value="เวียนหัว">
+                                        <label class="btn btn-outline-danger rounded-pill bg-white shadow-sm" for="feel_dizzy{{ med.id }}">😵 เวียนหัว</label>
+                      
+                                        <input type="radio" class="btn-check" name="feeling" id="feel_sleepy{{ med.id }}" value="ง่วงนอน">
+                                        <label class="btn btn-outline-info rounded-pill bg-white shadow-sm text-dark" for="feel_sleepy{{ med.id }}">😴 ง่วงนอน</label>
+                                    </div>
+                      
+                                    <!-- ช่องพิมพ์ข้อความเพิ่มเติม -->
+                                    <div class="form-floating shadow-sm">
+                                        <textarea class="form-control" name="note" placeholder="บันทึกเพิ่มเติม (ถ้ามี)" id="note{{ med.id }}" style="height: 100px; border-radius: 12px;"></textarea>
+                                        <label for="note{{ med.id }}" class="text-muted">บันทึกเพิ่มเติม (ถ้ามี)</label>
+                                    </div>
+                                    
+                                </div>
+                                <div class="modal-footer border-0 d-flex justify-content-between px-4 pb-4">
+                                    <!-- ปุ่มข้าม จะใช้ GET request ปกติเพื่อบันทึกแค่ว่ากินยาแล้ว -->
+                                    <a href="{{ url_for('take_med', med_id=med.id) }}" class="btn text-muted fw-bold text-decoration-none">ข้าม / ไม่ระบุ</a>
+                                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow">บันทึกข้อมูล ✔️</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- จบส่วน Modal -->
+
                 {% endfor %}
             {% else %}
                 <div class="col-12 text-center mt-5 text-muted">
