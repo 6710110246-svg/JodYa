@@ -1,7 +1,7 @@
 import os
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta ,timezone
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -9,9 +9,13 @@ from authlib.integrations.flask_client import OAuth
 from flask_mail import Mail, Message as MailMessage
 from apscheduler.schedulers.background import BackgroundScheduler
 
-os.environ['TZ'] = 'Asia/Bangkok'
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+# ตั้งค่า Timezone เป็นเวลาไทย
+os.environ['TZ'] = 'Asia/Bangkok'
+if hasattr(time, 'tzset'):
+    time.tzset()
 
+THAILAND_TZ = timezone(timedelta(hours=7))
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config['SECRET_KEY'] = 'super-secret-jodya-key'
