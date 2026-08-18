@@ -100,12 +100,36 @@
 
                             <!-- จัดกลุ่มปุ่มด้านล่างการ์ด -->
                             <div class="mt-auto">
-                                <!-- ปุ่มเรียก Pop-up บันทึกอาการ -->
-                                <button type="button" class="btn btn-success btn-sm w-100 rounded-pill mb-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#feelingModal{{ med.id }}">
-                                    ✅ บันทึกการกินยา
-                                </button>
-
-                                <a href="{{ url_for('delete_med', med_id=med.id) }}" class="btn btn-outline-danger btn-sm w-100 rounded-pill" onclick="return confirm('ต้องการลบรายการยานี้ใช่หรือไม่?')" data-translate="delete_btn">🗑️ ลบรายการยานี้</a>
+                                {% if med.id in logs and logs[med.id].status == 'taken' %}
+                                    <!-- กรณีที่บันทึกกินยาไปแล้ว จะแสดงความรู้สึก -->
+                                    <div class="p-3 mb-3 bg-light rounded text-center shadow-sm" style="border: 1px dashed #28a745;">
+                                        <h6 class="text-success fw-bold mb-2">✅ วันนี้ทานยาแล้ว</h6>
+                                        
+                                        {% if logs[med.id].feeling %}
+                                            <span class="badge rounded-pill bg-white text-dark border shadow-sm px-3 py-2" style="font-size: 0.9em;">
+                                                ความรู้สึก: {{ logs[med.id].feeling }}
+                                            </span>
+                                        {% endif %}
+                                        
+                                        {% if logs[med.id].note %}
+                                            <p class="text-muted small mt-2 mb-0" style="font-style: italic;">"{{ logs[med.id].note }}"</p>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- กลุ่มปุ่ม แก้ไข / ลบ -->
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-outline-success btn-sm w-50 rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#feelingModal{{ med.id }}">
+                                            ✏️ แก้ไขบันทึก
+                                        </button>
+                                        <a href="{{ url_for('delete_med', med_id=med.id) }}" class="btn btn-outline-danger btn-sm w-50 rounded-pill" onclick="return confirm('ต้องการลบรายการยานี้ใช่หรือไม่?')">🗑️ ลบยา</a>
+                                    </div>
+                                {% else %}
+                                    <!-- กรณียังไม่ได้บันทึกกินยา -->
+                                    <button type="button" class="btn btn-success btn-sm w-100 rounded-pill mb-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#feelingModal{{ med.id }}">
+                                        ✅ บันทึกการกินยา
+                                    </button>
+                                    <a href="{{ url_for('delete_med', med_id=med.id) }}" class="btn btn-outline-danger btn-sm w-100 rounded-pill" onclick="return confirm('ต้องการลบรายการยานี้ใช่หรือไม่?')" data-translate="delete_btn">🗑️ ลบรายการยานี้</a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

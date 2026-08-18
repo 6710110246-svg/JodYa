@@ -100,8 +100,9 @@ def load_user(user_id):
 @login_required
 def index():
     meds = Medication.query.filter_by(patient_id=current_user.id).all()
-    today = datetime.now().date()
-    logs = {log.med_id: log.status for log in MedLog.query.filter_by(date_logged=today).all()}
+    today = datetime.now(THAILAND_TZ).date()  # ปรับให้ใช้เวลาไทย (ตรงกับตอนบันทึก)
+    # เปลี่ยนจากการดึงแค่ status เป็นการดึง log มาทั้งก้อน
+    logs = {log.med_id: log for log in MedLog.query.filter_by(date_logged=today).all()}
     return render_template('patient_dash.html', meds=meds, logs=logs)
 
 @app.route('/login')
